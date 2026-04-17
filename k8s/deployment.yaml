@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: third-party-provider
+  namespace: trading-ai
+  labels:
+    app: third-party-provider
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: third-party-provider
+  template:
+    metadata:
+      labels:
+        app: third-party-provider
+    spec:
+      containers:
+      - name: third-party-provider
+        image: hsaii/third-party-provider:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+        - name: BINANCE__APIKEY
+          valueFrom:
+            secretKeyRef:
+              name: trading-secrets
+              key: binance-api-key
+        - name: BINANCE__APISECRET
+          valueFrom:
+            secretKeyRef:
+              name: trading-secrets
+              key: binance-api-secret
+        - name: BINANCE__BASEURL
+          value: "https://api.binance.com"
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: third-party-provider
+  namespace: trading-ai
+  labels:
+    app: third-party-provider
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: third-party-provider

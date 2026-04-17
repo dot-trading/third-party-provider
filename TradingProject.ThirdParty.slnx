@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TradingProject.ThirdParty.Api/TradingProject.ThirdParty.Api.csproj" />
+    <Project Path="src/TradingProject.ThirdParty.Application/TradingProject.ThirdParty.Application.csproj" />
+    <Project Path="src/TradingProject.ThirdParty.Domain/TradingProject.ThirdParty.Domain.csproj" />
+    <Project Path="src/TradingProject.ThirdParty.Infrastructure/TradingProject.ThirdParty.Infrastructure.csproj" />
+  </Folder>
+</Solution>
