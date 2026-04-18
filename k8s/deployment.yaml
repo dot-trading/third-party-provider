@@ -21,6 +21,9 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
+        envFrom:
+          - configMapRef:
+              name: service-endpoints
         env:
         - name: ASPNETCORE_ENVIRONMENT
           value: "Production"
