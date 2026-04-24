@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using TradingProject.ThirdParty.Domain.Abstractions;
+using TradingProject.ThirdParty.Domain.Models;
 using TradingProject.ThirdParty.Infrastructure.Settings;
 
 namespace TradingProject.ThirdParty.Infrastructure.Services;
@@ -46,6 +47,43 @@ public class BinanceService(IHttpClientFactory httpClientFactory, IOptions<Binan
         
         using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
         return double.Parse(doc.RootElement.GetProperty("price").GetString()!);
+    }
+
+    public async Task<List<Kline>> GetKlinesAsync(string symbol, string interval = "1h", int limit = 24, CancellationToken cancellationToken = default)
+    {
+        var url = $"/api/v3/klines?symbol={symbol}&interval={interval}&limit={limit}";
+        var response = await _httpClient.GetAsync(url, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
+        return doc.RootElement.EnumerateArray().Select(k =>
+        {
+            var arr = k.EnumerateArray().ToArray();
+            return new Kline(
+                OpenTime: arr[0].GetInt64(),
+                Open: double.Parse(arr[1].GetString()!),
+                High: double.Parse(arr[2].GetString()!),
+                Low: double.Parse(arr[3].GetString()!),
+                Close: double.Parse(arr[4].GetString()!),
+                Volume: double.Parse(arr[5].GetString()!));
+        }).ToList();
+    }
+
+    public async Task<Ticker24h?> GetTicker24hAsync(string symbol, CancellationToken cancellationToken = default)
+    {
+        var url = $"/api/v3/ticker/24hr?symbol={symbol}";
+        var response = await _httpClient.GetAsync(url, cancellationToken);
+        if (!response.IsSuccessStatusCode) return null;
+
+        using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
+        var root = doc.RootElement;
+        return new Ticker24h(
+            Symbol: root.GetProperty("symbol").GetString()!,
+            Price: double.Parse(root.GetProperty("lastPrice").GetString()!),
+            PriceChangePercent: double.Parse(root.GetProperty("priceChangePercent").GetString()!),
+            QuoteVolume: double.Parse(root.GetProperty("quoteVolume").GetString()!),
+            HighPrice: double.Parse(root.GetProperty("highPrice").GetString()!),
+            LowPrice: double.Parse(root.GetProperty("lowPrice").GetString()!));
     }
 
     private string Sign(string data, string secret)

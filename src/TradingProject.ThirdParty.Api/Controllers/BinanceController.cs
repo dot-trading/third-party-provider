@@ -1,7 +1,9 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetBalances;
+using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetKlines;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetPrice;
+using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetTicker24h;
 
 namespace TradingProject.ThirdParty.Api.Controllers;
 
@@ -20,6 +22,21 @@ public class BinanceController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetPrice(string symbol, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetPriceQuery(symbol), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("klines/{symbol}")]
+    public async Task<IActionResult> GetKlines(string symbol, [FromQuery] string interval = "1h", [FromQuery] int limit = 24, CancellationToken cancellationToken = default)
+    {
+        var result = await mediator.Send(new GetKlinesQuery(symbol, interval, limit), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("ticker/{symbol}")]
+    public async Task<IActionResult> GetTicker24h(string symbol, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetTicker24hQuery(symbol), cancellationToken);
+        if (result == null) return NotFound();
         return Ok(result);
     }
 }
