@@ -21,6 +21,18 @@ public static class DependencyInjection
         });
 
         services.AddTransient<IBinanceService, BinanceService>();
+        
+        services.Configure<RedisSettings>(configuration.GetSection("Redis"));
+        services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>
+        {
+            var settings = sp.GetRequiredService<IOptions<RedisSettings>>().Value;
+            var configurationOptions = new StackExchange.Redis.ConfigurationOptions
+            {
+                EndPoints = { settings.ConnectionString },
+                AbortOnConnectFail = false,
+            };
+            return StackExchange.Redis.ConnectionMultiplexer.Connect(configurationOptions);
+        });
 
         return services;
     }
