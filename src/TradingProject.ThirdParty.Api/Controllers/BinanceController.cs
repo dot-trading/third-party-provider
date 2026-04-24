@@ -35,7 +35,7 @@ public class BinanceController(IMediator mediator) : ControllerBase
     [HttpGet("ticker/{symbol}")]
     public async Task<IActionResult> GetTicker24h(string symbol, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetTicker24hQuery(symbol), cancellationToken);
+        var result = await mediator.Send(new GetTicker24HQuery(symbol), cancellationToken);
         if (result == null) return NotFound();
         return Ok(result);
     }
