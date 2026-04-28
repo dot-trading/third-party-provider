@@ -12,7 +12,7 @@ RUN dotnet restore src/TradingProject.ThirdParty.Api/TradingProject.ThirdParty.A
 
 # Copy the rest and publish
 COPY . .
-RUN dotnet publish src/TradingProject.ThirdParty.Api/TradingProject.ThirdParty.Api.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish src/TradingProject.ThirdParty.Api/TradingProject.ThirdParty.Api.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app

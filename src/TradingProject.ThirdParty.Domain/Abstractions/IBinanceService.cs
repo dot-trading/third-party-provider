@@ -8,4 +8,6 @@ public interface IBinanceService
     Task<double> GetCurrentPriceAsync(string symbol, CancellationToken cancellationToken = default);
     Task<List<Kline>> GetKlinesAsync(string symbol, string interval = "1h", int limit = 24, CancellationToken cancellationToken = default);
     Task<Ticker24h?> GetTicker24hAsync(string symbol, CancellationToken cancellationToken = default);
+    Task<OrderResult> PlaceMarketBuyAsync(string symbol, double quoteOrderQty, CancellationToken cancellationToken = default);
+    Task<OrderResult> PlaceMarketSellAsync(string symbol, double quantity, CancellationToken cancellationToken = default);
 }

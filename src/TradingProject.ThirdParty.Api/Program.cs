@@ -18,7 +18,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// UseHttpsRedirection removed: internal k8s traffic uses HTTP only
 app.MapControllers();
 
 app.Run();

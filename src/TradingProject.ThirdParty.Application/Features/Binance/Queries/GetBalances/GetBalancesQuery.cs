@@ -14,7 +14,7 @@ public class GetBalancesQueryHandler(
     ILogger<GetBalancesQueryHandler> logger) : IRequestHandler<GetBalancesQuery, Dictionary<string, double>>
 {
     private const string Key = "Binance:GetBalances";
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(1);
 
     public async Task<Dictionary<string, double>> Handle(GetBalancesQuery request, CancellationToken cancellationToken)
     {
