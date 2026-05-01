@@ -6,6 +6,7 @@ using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetBalances
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetKlines;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetPrice;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetTicker24h;
+using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetMinNotional;
 
 namespace TradingProject.ThirdParty.Api.Controllers;
 
@@ -24,6 +25,13 @@ public class BinanceController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetPrice(string symbol, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetPriceQuery(symbol), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("notional/{symbol}")]
+    public async Task<IActionResult> GetMinNotional(string symbol, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetMinNotionalQuery(symbol), cancellationToken);
         return Ok(result);
     }
 

@@ -13,6 +13,7 @@ public class BinanceService(IHttpClientFactory httpClientFactory, IOptions<Binan
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient("Binance");
     private readonly ConcurrentDictionary<string, double> _lotStepCache = new();
+    private readonly ConcurrentDictionary<string, double> _minNotionalCache = new();
 
     public async Task<Dictionary<string, double>> GetBalancesAsync(CancellationToken cancellationToken = default)
     {
@@ -130,6 +131,34 @@ public class BinanceService(IHttpClientFactory httpClientFactory, IOptions<Binan
 
         _lotStepCache[symbol] = stepSize;
         return stepSize;
+    }
+
+    public async Task<double> GetMinNotionalAsync(string symbol, CancellationToken cancellationToken = default)
+    {
+        if (_minNotionalCache.TryGetValue(symbol, out var cached))
+            return cached;
+
+        var url = $"/api/v3/exchangeInfo?symbol={symbol}";
+        var response = await _httpClient.GetAsync(url, cancellationToken);
+        if (!response.IsSuccessStatusCode) return 0;
+
+        using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
+        var minNotional = doc.RootElement
+            .GetProperty("symbols")[0]
+            .GetProperty("filters")
+            .EnumerateArray()
+            .Where(f => f.GetProperty("filterType").GetString() == "NOTIONAL" || f.GetProperty("filterType").GetString() == "MIN_NOTIONAL")
+            .Select(f => {
+                if (f.TryGetProperty("minNotional", out var mn))
+                    return double.Parse(mn.GetString()!, System.Globalization.CultureInfo.InvariantCulture);
+                if (f.TryGetProperty("notional", out var n))
+                    return double.Parse(n.GetString()!, System.Globalization.CultureInfo.InvariantCulture);
+                return 0.0;
+            })
+            .FirstOrDefault();
+
+        _minNotionalCache[symbol] = minNotional;
+        return minNotional;
     }
 
     private async Task<OrderResult> PlaceOrderAsync(string query, CancellationToken cancellationToken)

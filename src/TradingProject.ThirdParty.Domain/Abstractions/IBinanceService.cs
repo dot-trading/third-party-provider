@@ -10,4 +10,5 @@ public interface IBinanceService
     Task<Ticker24h?> GetTicker24hAsync(string symbol, CancellationToken cancellationToken = default);
     Task<OrderResult> PlaceMarketBuyAsync(string symbol, double quoteOrderQty, CancellationToken cancellationToken = default);
     Task<OrderResult> PlaceMarketSellAsync(string symbol, double quantity, CancellationToken cancellationToken = default);
+    Task<double> GetMinNotionalAsync(string symbol, CancellationToken cancellationToken = default);
 }
