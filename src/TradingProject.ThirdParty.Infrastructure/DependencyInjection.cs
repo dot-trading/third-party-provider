@@ -12,6 +12,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<BinanceSettings>(configuration.GetSection("Binance"));
+        services.Configure<CoinGeckoSettings>(configuration.GetSection("CoinGecko"));
         
         services.AddHttpClient("Binance", (sp, client) =>
         {

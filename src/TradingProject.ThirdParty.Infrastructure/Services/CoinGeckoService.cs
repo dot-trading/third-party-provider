@@ -1,11 +1,26 @@
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 using TradingProject.ThirdParty.Domain.Abstractions;
+using TradingProject.ThirdParty.Infrastructure.Settings;
 
 namespace TradingProject.ThirdParty.Infrastructure.Services;
 
-public class CoinGeckoService(IHttpClientFactory httpClientFactory) : ICoinGeckoService
+public class CoinGeckoService(IHttpClientFactory httpClientFactory, IOptions<CoinGeckoSettings> settings) : ICoinGeckoService
 {
-    private readonly HttpClient _httpClient = httpClientFactory.CreateClient("CoinGecko");
+    private readonly HttpClient _httpClient = CreateClient(httpClientFactory, settings.Value);
+
+    private static HttpClient CreateClient(IHttpClientFactory factory, CoinGeckoSettings settings)
+    {
+        var client = factory.CreateClient("CoinGecko");
+        if (!string.IsNullOrEmpty(settings.ApiKey))
+        {
+            // For demo/free plan, the header is x-cg-demo-api-key
+            // For pro plan, it's x-cg-pro-api-key
+            // We'll use the demo one as it's more likely for the free plan mentioned
+            client.DefaultRequestHeaders.Add("x-cg-demo-api-key", settings.ApiKey);
+        }
+        return client;
+    }
 
     public async Task<double> GetPriceAsync(string coinId, string vsCurrency = "usd", CancellationToken cancellationToken = default)
     {

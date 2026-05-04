@@ -39,6 +39,11 @@ spec:
               key: binance-api-secret
         - name: BINANCE__BASEURL
           value: "https://api.binance.com"
+        - name: COINGECKO__APIKEY
+          valueFrom:
+            secretKeyRef:
+              name: trading-secrets
+              key: coingecko-api-key
         resources:
           limits:
             memory: "256Mi"
