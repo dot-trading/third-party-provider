@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System.Text.Json;
 using TradingProject.ThirdParty.Domain.Abstractions;
-using TradingProject.ThirdParty.Domain.Models;
+using TradingProject.ThirdParty.Domain.Models.Market;
 
 namespace TradingProject.ThirdParty.Application.Features.Binance.Queries.GetTicker24h;
 

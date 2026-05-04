@@ -4,7 +4,8 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Options;
 using TradingProject.ThirdParty.Domain.Abstractions;
-using TradingProject.ThirdParty.Domain.Models;
+using TradingProject.ThirdParty.Domain.Models.Market;
+using TradingProject.ThirdParty.Domain.Models.Trading;
 using TradingProject.ThirdParty.Infrastructure.Settings;
 
 namespace TradingProject.ThirdParty.Infrastructure.Services;

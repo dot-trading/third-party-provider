@@ -1,6 +1,6 @@
 using MediatR;
 using TradingProject.ThirdParty.Domain.Abstractions;
-using TradingProject.ThirdParty.Domain.Models;
+using TradingProject.ThirdParty.Domain.Models.Trading;
 
 namespace TradingProject.ThirdParty.Application.Features.Binance.Commands.PlaceMarketBuy;
 
