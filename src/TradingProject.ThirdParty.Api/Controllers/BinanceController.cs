@@ -10,6 +10,7 @@ using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetMinNotio
 
 namespace TradingProject.ThirdParty.Api.Controllers;
 
+[Obsolete("This controller is deprecated. Please use the specialized providers controllers instead.")]
 [ApiController]
 [Route("api/[controller]")]
 public class BinanceController(IMediator mediator) : ControllerBase
