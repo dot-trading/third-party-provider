@@ -26,8 +26,16 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(10);
         });
 
+        services.AddHttpClient("CoinGecko", client =>
+        {
+            client.BaseAddress = new Uri("https://api.coingecko.com/api/v3/");
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.Add("User-Agent", "TradingProject");
+        });
+
         services.AddTransient<IBinanceService, BinanceService>();
         services.AddTransient<ISentimentService, AlternativeMeService>();
+        services.AddTransient<ICoinGeckoService, CoinGeckoService>();
         
         services.Configure<RedisSettings>(configuration.GetSection("Redis"));
         services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>

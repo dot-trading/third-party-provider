@@ -5,6 +5,7 @@ using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetPrice;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetTicker24h;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetMinNotional;
 using TradingProject.ThirdParty.Application.Features.Sentiment.Queries.GetFearAndGreed;
+using TradingProject.ThirdParty.Application.Features.MarketData.Queries.GetCoinGeckoPrice;
 
 namespace TradingProject.ThirdParty.Api.Controllers;
 
@@ -45,6 +46,13 @@ public class MarketDataController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetFearAndGreed(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetFearAndGreedQuery(), cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("price/coingecko/{coinId}")]
+    public async Task<IActionResult> GetCoinGeckoPrice(string coinId, [FromQuery] string vsCurrency = "usd", CancellationToken cancellationToken = default)
+    {
+        var result = await mediator.Send(new GetCoinGeckoPriceQuery(coinId, vsCurrency), cancellationToken);
         return Ok(result);
     }
 }
