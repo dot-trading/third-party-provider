@@ -14,7 +14,7 @@ public class GetTicker24HQueryHandler(
     IConnectionMultiplexer redis,
     ILogger<GetTicker24HQueryHandler> logger) : IRequestHandler<GetTicker24HQuery, Ticker24h?>
 {
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(1);
 
     public async Task<Ticker24h?> Handle(GetTicker24HQuery request, CancellationToken cancellationToken)
     {
