@@ -1,48 +1,37 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 using System.Text.Json;
+using TradingProject.ThirdParty.Application.Abstractions;
 using TradingProject.ThirdParty.Domain.Abstractions;
 using TradingProject.ThirdParty.Domain.Models.Market;
 
 namespace TradingProject.ThirdParty.Application.Features.Binance.Queries.GetTicker24h;
 
-public record GetTicker24HQuery(string Symbol) : IRequest<Ticker24h?>;
+public record GetTicker24hQuery(string Symbol) : IRequest<Ticker24h?>;
 
-public class GetTicker24HQueryHandler(
+public class GetTicker24hQueryHandler(
     IBinanceService binanceService,
-    IConnectionMultiplexer redis,
-    ILogger<GetTicker24HQueryHandler> logger) : IRequestHandler<GetTicker24HQuery, Ticker24h?>
+    ICacheService cache,
+    ILogger<GetTicker24hQueryHandler> logger) : IRequestHandler<GetTicker24hQuery, Ticker24h?>
 {
     private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(1);
 
-    public async Task<Ticker24h?> Handle(GetTicker24HQuery request, CancellationToken cancellationToken)
+    public async Task<Ticker24h?> Handle(GetTicker24hQuery request, CancellationToken cancellationToken)
     {
-        var db = redis.GetDatabase();
         var key = $"Binance:Ticker24h:{request.Symbol}";
 
-        // Try to get from cache
-        var cachedData = await db.StringGetAsync(key);
-
-        if (cachedData.HasValue)
+        var cached = await cache.GetAsync(key, cancellationToken);
+        if (cached is not null)
         {
             logger.LogInformation("Returning cached 24h ticker for key {Key}", key);
-            return JsonSerializer.Deserialize<Ticker24h>(cachedData.ToString());
+            return JsonSerializer.Deserialize<Ticker24h>(cached);
         }
 
-        logger.LogInformation("No cached 24h ticker found for key {Key}, fetching from Binance", key);
-
-        // Fetch from service
+        logger.LogInformation("Fetching 24h ticker from Binance for key {Key}", key);
         var ticker = await binanceService.GetTicker24hAsync(request.Symbol, cancellationToken);
 
-        // Store in cache if result exists
-        if (ticker != null)
-        {
-            var serialized = JsonSerializer.Serialize(ticker);
-            await db.StringSetAsync(key, serialized, CacheDuration);
-
-            logger.LogInformation("Stored 24h ticker in cache for key {Key}", key);
-        }
+        if (ticker is not null)
+            await cache.SetAsync(key, JsonSerializer.Serialize(ticker), CacheDuration, cancellationToken);
 
         return ticker;
     }

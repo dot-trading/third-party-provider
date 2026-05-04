@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -13,8 +12,6 @@ namespace TradingProject.ThirdParty.Infrastructure.Services;
 public class BinanceService(IHttpClientFactory httpClientFactory, IOptions<BinanceSettings> settings) : IBinanceService
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient("Binance");
-    private readonly ConcurrentDictionary<string, double> _lotStepCache = new();
-    private readonly ConcurrentDictionary<string, double> _minNotionalCache = new();
 
     public async Task<Dictionary<string, double>> GetBalancesAsync(CancellationToken cancellationToken = default)
     {
@@ -51,9 +48,9 @@ public class BinanceService(IHttpClientFactory httpClientFactory, IOptions<Binan
         var url = $"/api/v3/ticker/price?symbol={symbol}";
         var response = await _httpClient.GetAsync(url, cancellationToken);
         response.EnsureSuccessStatusCode();
-        
+
         using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
-        return double.Parse(doc.RootElement.GetProperty("price").GetString()!);
+        return double.Parse(doc.RootElement.GetProperty("price").GetString()!, System.Globalization.CultureInfo.InvariantCulture);
     }
 
     public async Task<List<Kline>> GetKlinesAsync(string symbol, string interval = "1h", int limit = 24, CancellationToken cancellationToken = default)
@@ -68,11 +65,11 @@ public class BinanceService(IHttpClientFactory httpClientFactory, IOptions<Binan
             var arr = k.EnumerateArray().ToArray();
             return new Kline(
                 OpenTime: arr[0].GetInt64(),
-                Open: double.Parse(arr[1].GetString()!),
-                High: double.Parse(arr[2].GetString()!),
-                Low: double.Parse(arr[3].GetString()!),
-                Close: double.Parse(arr[4].GetString()!),
-                Volume: double.Parse(arr[5].GetString()!));
+                Open: double.Parse(arr[1].GetString()!, System.Globalization.CultureInfo.InvariantCulture),
+                High: double.Parse(arr[2].GetString()!, System.Globalization.CultureInfo.InvariantCulture),
+                Low: double.Parse(arr[3].GetString()!, System.Globalization.CultureInfo.InvariantCulture),
+                Close: double.Parse(arr[4].GetString()!, System.Globalization.CultureInfo.InvariantCulture),
+                Volume: double.Parse(arr[5].GetString()!, System.Globalization.CultureInfo.InvariantCulture));
         }).ToList();
     }
 
@@ -86,11 +83,11 @@ public class BinanceService(IHttpClientFactory httpClientFactory, IOptions<Binan
         var root = doc.RootElement;
         return new Ticker24h(
             Symbol: root.GetProperty("symbol").GetString()!,
-            Price: double.Parse(root.GetProperty("lastPrice").GetString()!),
-            PriceChangePercent: double.Parse(root.GetProperty("priceChangePercent").GetString()!),
-            QuoteVolume: double.Parse(root.GetProperty("quoteVolume").GetString()!),
-            HighPrice: double.Parse(root.GetProperty("highPrice").GetString()!),
-            LowPrice: double.Parse(root.GetProperty("lowPrice").GetString()!));
+            Price: double.Parse(root.GetProperty("lastPrice").GetString()!, System.Globalization.CultureInfo.InvariantCulture),
+            PriceChangePercent: double.Parse(root.GetProperty("priceChangePercent").GetString()!, System.Globalization.CultureInfo.InvariantCulture),
+            QuoteVolume: double.Parse(root.GetProperty("quoteVolume").GetString()!, System.Globalization.CultureInfo.InvariantCulture),
+            HighPrice: double.Parse(root.GetProperty("highPrice").GetString()!, System.Globalization.CultureInfo.InvariantCulture),
+            LowPrice: double.Parse(root.GetProperty("lowPrice").GetString()!, System.Globalization.CultureInfo.InvariantCulture));
     }
 
     public async Task<OrderResult> PlaceMarketBuyAsync(string symbol, double quoteOrderQty, CancellationToken cancellationToken = default)
@@ -114,42 +111,34 @@ public class BinanceService(IHttpClientFactory httpClientFactory, IOptions<Binan
 
     private async Task<double> GetLotStepSizeAsync(string symbol, CancellationToken cancellationToken)
     {
-        if (_lotStepCache.TryGetValue(symbol, out var cached))
-            return cached;
-
         var url = $"/api/v3/exchangeInfo?symbol={symbol}";
         var response = await _httpClient.GetAsync(url, cancellationToken);
         if (!response.IsSuccessStatusCode) return 0;
 
         using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
-        var stepSize = doc.RootElement
+        return doc.RootElement
             .GetProperty("symbols")[0]
             .GetProperty("filters")
             .EnumerateArray()
             .Where(f => f.GetProperty("filterType").GetString() == "LOT_SIZE")
             .Select(f => double.Parse(f.GetProperty("stepSize").GetString()!, System.Globalization.CultureInfo.InvariantCulture))
             .FirstOrDefault();
-
-        _lotStepCache[symbol] = stepSize;
-        return stepSize;
     }
 
     public async Task<double> GetMinNotionalAsync(string symbol, CancellationToken cancellationToken = default)
     {
-        if (_minNotionalCache.TryGetValue(symbol, out var cached))
-            return cached;
-
         var url = $"/api/v3/exchangeInfo?symbol={symbol}";
         var response = await _httpClient.GetAsync(url, cancellationToken);
         if (!response.IsSuccessStatusCode) return 0;
 
         using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
-        var minNotional = doc.RootElement
+        return doc.RootElement
             .GetProperty("symbols")[0]
             .GetProperty("filters")
             .EnumerateArray()
             .Where(f => f.GetProperty("filterType").GetString() == "NOTIONAL" || f.GetProperty("filterType").GetString() == "MIN_NOTIONAL")
-            .Select(f => {
+            .Select(f =>
+            {
                 if (f.TryGetProperty("minNotional", out var mn))
                     return double.Parse(mn.GetString()!, System.Globalization.CultureInfo.InvariantCulture);
                 if (f.TryGetProperty("notional", out var n))
@@ -157,9 +146,6 @@ public class BinanceService(IHttpClientFactory httpClientFactory, IOptions<Binan
                 return 0.0;
             })
             .FirstOrDefault();
-
-        _minNotionalCache[symbol] = minNotional;
-        return minNotional;
     }
 
     private async Task<OrderResult> PlaceOrderAsync(string query, CancellationToken cancellationToken)
@@ -181,17 +167,17 @@ public class BinanceService(IHttpClientFactory httpClientFactory, IOptions<Binan
         var root = doc.RootElement;
 
         var executedQty = double.Parse(root.GetProperty("executedQty").GetString()!, System.Globalization.CultureInfo.InvariantCulture);
-        var cummulativeQuoteQty = double.Parse(root.GetProperty("cummulativeQuoteQty").GetString()!, System.Globalization.CultureInfo.InvariantCulture);
-        var avgPrice = executedQty > 0 ? cummulativeQuoteQty / executedQty : 0;
+        var cumulativeQuoteQty = double.Parse(root.GetProperty("cummulativeQuoteQty").GetString()!, System.Globalization.CultureInfo.InvariantCulture);
+        var avgPrice = executedQty > 0 ? cumulativeQuoteQty / executedQty : 0;
 
         return new OrderResult(
             OrderId: root.GetProperty("orderId").GetInt64().ToString(),
             ExecutedQty: executedQty,
-            CummulativeQuoteQty: cummulativeQuoteQty,
+            CumulativeQuoteQty: cumulativeQuoteQty,
             Price: avgPrice);
     }
 
-    private string Sign(string data, string secret)
+    private static string Sign(string data, string secret)
     {
         using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
         var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));

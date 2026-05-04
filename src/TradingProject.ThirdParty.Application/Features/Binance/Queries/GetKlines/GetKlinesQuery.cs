@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using StackExchange.Redis;
 using System.Text.Json;
+using TradingProject.ThirdParty.Application.Abstractions;
 using TradingProject.ThirdParty.Domain.Abstractions;
 using TradingProject.ThirdParty.Domain.Models.Market;
 
@@ -11,36 +11,26 @@ public record GetKlinesQuery(string Symbol, string Interval = "1h", int Limit = 
 
 public class GetKlinesQueryHandler(
     IBinanceService binanceService,
-    IConnectionMultiplexer redis,
+    ICacheService cache,
     ILogger<GetKlinesQueryHandler> logger) : IRequestHandler<GetKlinesQuery, List<Kline>>
 {
     private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
 
     public async Task<List<Kline>> Handle(GetKlinesQuery request, CancellationToken cancellationToken)
     {
-        var db = redis.GetDatabase();
         var key = $"Binance:Klines:{request.Symbol}:{request.Interval}:{request.Limit}";
 
-        // Try to get from cache
-        var cachedData = await db.StringGetAsync(key);
-
-        if (cachedData.HasValue)
+        var cached = await cache.GetAsync(key, cancellationToken);
+        if (cached is not null)
         {
             logger.LogInformation("Returning cached klines for key {Key}", key);
-            return JsonSerializer.Deserialize<List<Kline>>(cachedData.ToString())
-                   ?? new List<Kline>();
+            return JsonSerializer.Deserialize<List<Kline>>(cached) ?? [];
         }
 
-        logger.LogInformation("No cached klines found for key {Key}, fetching from Binance", key);
-
-        // Fetch from service
+        logger.LogInformation("Fetching klines from Binance for key {Key}", key);
         var klines = await binanceService.GetKlinesAsync(request.Symbol, request.Interval, request.Limit, cancellationToken);
 
-        // Store in cache
-        var serialized = JsonSerializer.Serialize(klines);
-        await db.StringSetAsync(key, serialized, CacheDuration);
-
-        logger.LogInformation("Stored klines in cache for key {Key}", key);
+        await cache.SetAsync(key, JsonSerializer.Serialize(klines), CacheDuration, cancellationToken);
 
         return klines;
     }
