@@ -20,7 +20,14 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(10);
         });
 
+        services.AddHttpClient("AlternativeMe", client =>
+        {
+            client.BaseAddress = new Uri("https://api.alternative.me/");
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
+
         services.AddTransient<IBinanceService, BinanceService>();
+        services.AddTransient<ISentimentService, AlternativeMeService>();
         
         services.Configure<RedisSettings>(configuration.GetSection("Redis"));
         services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>

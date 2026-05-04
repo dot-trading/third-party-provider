@@ -4,6 +4,7 @@ using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetKlines;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetPrice;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetTicker24h;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetMinNotional;
+using TradingProject.ThirdParty.Application.Features.Sentiment.Queries.GetFearAndGreed;
 
 namespace TradingProject.ThirdParty.Api.Controllers;
 
@@ -37,6 +38,13 @@ public class MarketDataController(IMediator mediator) : ControllerBase
     {
         var result = await mediator.Send(new GetTicker24HQuery(symbol), cancellationToken);
         if (result == null) return NotFound();
+        return Ok(result);
+    }
+
+    [HttpGet("sentiment/fear-and-greed")]
+    public async Task<IActionResult> GetFearAndGreed(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetFearAndGreedQuery(), cancellationToken);
         return Ok(result);
     }
 }
