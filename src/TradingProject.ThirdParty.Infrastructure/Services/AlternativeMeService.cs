@@ -1,10 +1,11 @@
 using System.Text.Json;
 using TradingProject.ThirdParty.Application.Abstractions;
-using TradingProject.ThirdParty.Domain.Models.Market;
+using TradingProject.ThirdParty.Application.Common.Models;
 
 namespace TradingProject.ThirdParty.Infrastructure.Services;
 
-public class AlternativeMeService(IHttpClientFactory httpClientFactory, JsonSerializerOptions jsonOptions) : ISentimentService
+public class AlternativeMeService(IHttpClientFactory httpClientFactory, JsonSerializerOptions jsonOptions)
+    : ISentimentService
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient("AlternativeMe");
 
@@ -23,6 +24,4 @@ public class AlternativeMeService(IHttpClientFactory httpClientFactory, JsonSeri
             Timestamp: data.Timestamp);
     }
 
-    private record FearAndGreedResponseDto(List<FearAndGreedDataDto> Data);
-    private record FearAndGreedDataDto(int Value, string ValueClassification, long Timestamp);
 }

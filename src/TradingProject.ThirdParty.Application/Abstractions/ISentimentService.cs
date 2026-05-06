@@ -1,3 +1,4 @@
+using TradingProject.ThirdParty.Application.Common.Models;
 using TradingProject.ThirdParty.Domain.Models.Market;
 
 namespace TradingProject.ThirdParty.Application.Abstractions;
