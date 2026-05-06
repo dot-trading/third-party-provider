@@ -1,10 +1,10 @@
 using System.Text.Json;
-using TradingProject.ThirdParty.Domain.Abstractions;
+using TradingProject.ThirdParty.Application.Abstractions;
 using TradingProject.ThirdParty.Domain.Models.Market;
 
 namespace TradingProject.ThirdParty.Infrastructure.Services;
 
-public class AlternativeMeService(IHttpClientFactory httpClientFactory) : ISentimentService
+public class AlternativeMeService(IHttpClientFactory httpClientFactory, JsonSerializerOptions jsonOptions) : ISentimentService
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient("AlternativeMe");
 
@@ -13,13 +13,16 @@ public class AlternativeMeService(IHttpClientFactory httpClientFactory) : ISenti
         var response = await _httpClient.GetAsync("fng/", cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
-        var data = doc.RootElement.GetProperty("data")[0];
+        var dto = await JsonSerializer.DeserializeAsync<FearAndGreedResponseDto>(
+            await response.Content.ReadAsStreamAsync(cancellationToken), jsonOptions, cancellationToken);
 
+        var data = dto!.Data[0];
         return new FearAndGreedIndex(
-            Value: int.Parse(data.GetProperty("value").GetString()!),
-            Classification: data.GetProperty("value_classification").GetString()!,
-            Timestamp: long.Parse(data.GetProperty("timestamp").GetString()!)
-        );
+            Value: data.Value,
+            Classification: data.ValueClassification,
+            Timestamp: data.Timestamp);
     }
+
+    private record FearAndGreedResponseDto(List<FearAndGreedDataDto> Data);
+    private record FearAndGreedDataDto(int Value, string ValueClassification, long Timestamp);
 }

@@ -2,7 +2,6 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using TradingProject.ThirdParty.Application.Abstractions;
-using TradingProject.ThirdParty.Domain.Abstractions;
 
 namespace TradingProject.ThirdParty.Application.Features.Binance.Queries.GetBalances;
 
