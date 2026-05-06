@@ -2,7 +2,7 @@ using TradingProject.ThirdParty.Application.Common.Models;
 
 namespace TradingProject.ThirdParty.Application.Abstractions;
 
-public interface IBinanceService : IDisposable
+public interface IBinanceService
 {
     Task<ListBinanceBalanceDto?> GetBalancesAsync(
         CancellationToken cancellationToken = default);
@@ -35,11 +35,15 @@ public interface IBinanceService : IDisposable
         double quantity,
         CancellationToken cancellationToken = default);
     
-    Task<double> GetMinNotionalAsync(
+    Task<double?> GetMinNotionalAsync(
         string symbol,
         CancellationToken cancellationToken = default);
 
     Task<BinanceExchangeInfoDto?> GetExchangeInfoAsync(
         string symbol,
         CancellationToken cancellationToken);
+
+    Task<double?> GetLotStepSizeAsync(
+        string symbol,
+        CancellationToken cancellationToken = default);
 }

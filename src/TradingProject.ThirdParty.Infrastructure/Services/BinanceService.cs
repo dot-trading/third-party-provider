@@ -15,18 +15,21 @@ public class BinanceService : IBinanceService
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly string _apiSecret;
     private readonly ITimerService _timerService;
+    private readonly ICacheService _cacheService;
 
     public BinanceService(
         IHttpClientFactory httpClientFactory,
         ITimerService timerService,
         IOptions<BinanceSettings> settings,
-        JsonSerializerOptions jsonOptions)
+        JsonSerializerOptions jsonOptions,
+        ICacheService cacheService)
     {
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.Binance);
         _jsonOptions = jsonOptions;
 
         _apiSecret = settings.Value.ApiSecret;
         _timerService = timerService;
+        _cacheService = cacheService;
 
         if (string.IsNullOrWhiteSpace(settings.Value.ApiKey))
             throw new AccessViolationException("cannot use binance service without a valid api key");
@@ -174,22 +177,40 @@ public class BinanceService : IBinanceService
         CancellationToken cancellationToken = default)
     {
         var stepSize = await GetLotStepSizeAsync(symbol, cancellationToken);
-        var alignedQty = stepSize > 0 ? Math.Truncate(quantity / stepSize) * stepSize : quantity;
-        var decimals = stepSize > 0 ? Math.Max(0, -(int)Math.Floor(Math.Log10(stepSize))) : 8;
+        
+        if (stepSize is null or <= 0)
+        {
+            throw new InvalidOperationException($"Cannot place order: LotStepSize missing or invalid for {symbol}");
+        }
+
+        var alignedQty = Math.Truncate(quantity / stepSize.Value) * stepSize.Value;
+        var decimals = Math.Max(0, -(int)Math.Floor(Math.Log10(stepSize.Value)));
         var qty = alignedQty.ToString($"F{decimals}", System.Globalization.CultureInfo.InvariantCulture);
-        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var timestamp = _timerService.BinanceNowDateTimeOffset();
         var query = $"symbol={symbol}&side=SELL&type=MARKET&quantity={qty}&timestamp={timestamp}";
         return await PlaceOrderAsync(query, cancellationToken);
     }
     
     public async Task<BinanceExchangeInfoDto?> GetExchangeInfoAsync(string symbol, CancellationToken cancellationToken)
     {
+        var cacheKey = $"binance:exchangeInfo:{symbol}";
+        var cachedData = await _cacheService.GetAsync(cacheKey, cancellationToken);
+        
+        if (cachedData is not null)
+        {
+            return JsonSerializer.Deserialize<BinanceExchangeInfoDto>(cachedData, _jsonOptions);
+        }
+
         var url = $"/api/v3/exchangeInfo?symbol={symbol}";
         var response = await _httpClient.GetAsync(url, cancellationToken);
         if (!response.IsSuccessStatusCode) return null;
 
-        return await JsonSerializer.DeserializeAsync<BinanceExchangeInfoDto>(
-            await response.Content.ReadAsStreamAsync(cancellationToken), _jsonOptions, cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+        
+        // Cache for 180 seconds as requested
+        await _cacheService.SetAsync(cacheKey, content, TimeSpan.FromSeconds(180), cancellationToken);
+
+        return JsonSerializer.Deserialize<BinanceExchangeInfoDto>(content, _jsonOptions);
     }
 
     /// <summary>
@@ -205,37 +226,26 @@ public class BinanceService : IBinanceService
     /// the nearest valid multiple before submitting the order.
     /// </para>
     /// </summary>
-    /// <returns>The step size, or <c>0</c> if the exchange info could not be retrieved.</returns>
-    private async Task<double> GetLotStepSizeAsync(string symbol, CancellationToken cancellationToken)
+    /// <returns>The step size, or <c>null</c> if the filter or exchange info could not be retrieved.</returns>
+    public async Task<double?> GetLotStepSizeAsync(
+        string symbol,
+        CancellationToken cancellationToken = default)
     {
         var exchangeInfo = await GetExchangeInfoAsync(symbol, cancellationToken);
-        return exchangeInfo?.Symbols[0].Filters
-            .Where(f => f.FilterType == "LOT_SIZE")
-            .Select(f => f.StepSize ?? 0)
-            .FirstOrDefault() ?? 0;
+        return exchangeInfo?.LotStepSize();
     }
 
-    public async Task<double> GetMinNotionalAsync(string symbol, CancellationToken cancellationToken = default)
+    public async Task<double?> GetMinNotionalAsync(string symbol, CancellationToken cancellationToken = default)
     {
         var exchangeInfo = await GetExchangeInfoAsync(symbol, cancellationToken);
-        return exchangeInfo?.Symbols[0].Filters
-            .Where(f => f.FilterType is "NOTIONAL" or "MIN_NOTIONAL")
-            .Select(f => f.MinNotional ?? f.Notional ?? 0)
-            .FirstOrDefault() ?? 0;
+        return exchangeInfo?.MinNotional();
     }
 
     
-
-
     private static string Sign(string data, string secret)
     {
         using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
         var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
         return Convert.ToHexString(hash).ToLower();
-    }
-
-    public void Dispose()
-    {
-        _httpClient?.Dispose();
     }
 }

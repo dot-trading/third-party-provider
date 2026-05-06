@@ -1,6 +1,7 @@
 namespace TradingProject.ThirdParty.Application.Common.Models;
 
 public record BinanceBalanceDto(string Asset, double Free, double Locked);
+
 public record ListBinanceBalanceDto(
     BinanceBalanceDto[] Balances,
     int MakerCommission,
@@ -16,7 +17,14 @@ public record KLine(
     double Volume);
 
 public record BinancePriceDto(double Price);
-public record BinanceTicker24HDto(string Symbol, double LastPrice, double PriceChangePercent, double QuoteVolume, double HighPrice, double LowPrice);
+
+public record BinanceTicker24HDto(
+    string Symbol,
+    double LastPrice,
+    double PriceChangePercent,
+    double QuoteVolume,
+    double HighPrice,
+    double LowPrice);
 
 /// <summary>
 /// Response from GET /api/v3/order — query a single order.
@@ -81,6 +89,28 @@ public record BinanceOrderDto(
     double OrigQuoteOrderQty,
     string SelfTradePreventionMode);
 
-public record BinanceExchangeInfoDto(List<BinanceSymbolDto> Symbols);
+public class BinanceExchangeInfoDto
+{
+    public BinanceSymbolDto[] Symbols { get; set; } = [];
+
+    public BinanceFilterDto? LotStepSize() => Symbols.FirstOrDefault()?.Filters
+        .FirstOrDefault(f => f.FilterType is "LOT_SIZE");
+    
+    public BinanceFilterDto? MinNotional() => Symbols.FirstOrDefault()?.Filters
+        .FirstOrDefault(f => f.FilterType is "NOTIONAL" or "MIN_NOTIONAL");
+};
+
 public record BinanceSymbolDto(List<BinanceFilterDto> Filters);
-public record BinanceFilterDto(string FilterType, double? StepSize, double? MinNotional, double? Notional);
+
+public record BinanceFilterDto(string FilterType, double? StepSize, double? MinNotional, double? Notional)
+{
+    public double NotionalValue => MinNotional ?? Notional ?? 0;
+    public double StepSizeValue => StepSize ?? 0;
+
+    public static implicit operator double?(BinanceFilterDto? dto) => dto?.FilterType switch
+    {
+        "LOT_SIZE" => dto.StepSizeValue,
+        "NOTIONAL" or "MIN_NOTIONAL" => dto.NotionalValue,
+        _ => 0
+    };
+};
