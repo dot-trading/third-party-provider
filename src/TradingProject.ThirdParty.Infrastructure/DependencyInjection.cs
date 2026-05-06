@@ -1,8 +1,9 @@
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using TradingProject.ThirdParty.Application.Abstractions;
-using TradingProject.ThirdParty.Domain.Abstractions;
+using TradingProject.ThirdParty.Domain.Constants;
 using TradingProject.ThirdParty.Infrastructure.Services;
 using TradingProject.ThirdParty.Infrastructure.Settings;
 
@@ -12,14 +13,17 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddSingleton(new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
         services.Configure<BinanceSettings>(configuration.GetSection("Binance"));
         services.Configure<CoinGeckoSettings>(configuration.GetSection("CoinGecko"));
 
-        services.AddHttpClient("Binance", (sp, client) =>
+        services.AddHttpClient(HttpClientNames.Binance, (sp, client) =>
         {
             var settings = sp.GetRequiredService<IOptions<BinanceSettings>>().Value;
             client.BaseAddress = new Uri(settings.BaseUrl);
-            client.Timeout = TimeSpan.FromSeconds(10);
+            client.Timeout = TimeSpan.FromSeconds(60);
+            client.DefaultRequestHeaders.Add("X-MBX-APIKEY", settings.ApiKey);
         });
 
         services.AddHttpClient("AlternativeMe", client =>
@@ -41,6 +45,7 @@ public static class DependencyInjection
         services.AddTransient<IBinanceService, BinanceService>();
         services.AddTransient<ISentimentService, AlternativeMeService>();
         services.AddTransient<ICoinGeckoService, CoinGeckoService>();
+        services.AddTransient<ITimerService, TimerService>();
 
         services.Configure<RedisSettings>(configuration.GetSection("Redis"));
         services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>

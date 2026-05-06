@@ -1,6 +1,6 @@
 using TradingProject.ThirdParty.Domain.Models.Market;
 
-namespace TradingProject.ThirdParty.Domain.Abstractions;
+namespace TradingProject.ThirdParty.Application.Abstractions;
 
 public interface ISentimentService
 {

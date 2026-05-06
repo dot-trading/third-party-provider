@@ -1,9 +1,9 @@
 using System.Text.Json;
-using TradingProject.ThirdParty.Domain.Abstractions;
+using TradingProject.ThirdParty.Application.Abstractions;
 
 namespace TradingProject.ThirdParty.Infrastructure.Services;
 
-public class CoinGeckoService(IHttpClientFactory httpClientFactory) : ICoinGeckoService
+public class CoinGeckoService(IHttpClientFactory httpClientFactory, JsonSerializerOptions jsonOptions) : ICoinGeckoService
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient("CoinGecko");
 
@@ -16,20 +16,17 @@ public class CoinGeckoService(IHttpClientFactory httpClientFactory) : ICoinGecko
     public async Task<Dictionary<string, double>> GetPricesAsync(IEnumerable<string> coinIds, string vsCurrency = "usd", CancellationToken cancellationToken = default)
     {
         var ids = string.Join(",", coinIds.Select(id => id.ToLower()));
-        var url = $"simple/price?ids={ids}&vs_currencies={vsCurrency.ToLower()}";
+        var currency = vsCurrency.ToLower();
+        var url = $"simple/price?ids={ids}&vs_currencies={currency}";
 
         var response = await _httpClient.GetAsync(url, cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        using var doc = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
-        var result = new Dictionary<string, double>();
+        var data = await JsonSerializer.DeserializeAsync<Dictionary<string, Dictionary<string, double>>>(
+            await response.Content.ReadAsStreamAsync(cancellationToken), jsonOptions, cancellationToken);
 
-        foreach (var property in doc.RootElement.EnumerateObject())
-        {
-            if (property.Value.TryGetProperty(vsCurrency.ToLower(), out var priceElement))
-                result[property.Name] = priceElement.GetDouble();
-        }
-
-        return result;
+        return data!
+            .Where(kv => kv.Value.ContainsKey(currency))
+            .ToDictionary(kv => kv.Key, kv => kv.Value[currency]);
     }
 }
