@@ -26,7 +26,8 @@ public class GetPriceQueryHandler(
         }
 
         logger.LogInformation("Fetching price from Binance for key {Key}", key);
-        var price = await binanceService.GetCurrentPriceAsync(request.Symbol, cancellationToken);
+        var priceDto = await binanceService.GetCurrentPriceAsync(request.Symbol, cancellationToken);
+        var price = priceDto?.Price ?? 0;
 
         await cache.SetAsync(key, price.ToString(CultureInfo.InvariantCulture), CacheDuration, cancellationToken);
 

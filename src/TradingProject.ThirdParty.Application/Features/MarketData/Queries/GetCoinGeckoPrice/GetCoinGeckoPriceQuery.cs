@@ -26,7 +26,8 @@ public class GetCoinGeckoPriceQueryHandler(
         }
 
         logger.LogInformation("Fetching CoinGecko price for {CoinId}", request.CoinId);
-        var price = await coinGeckoService.GetPriceAsync(request.CoinId, request.VsCurrency, cancellationToken);
+        var priceDto = await coinGeckoService.GetPriceAsync(request.CoinId, request.VsCurrency, cancellationToken);
+        var price = priceDto?.Price ?? 0;
 
         if (price > 0)
             await cache.SetAsync(key, price.ToString(CultureInfo.InvariantCulture), CacheDuration, cancellationToken);

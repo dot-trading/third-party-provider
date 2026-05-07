@@ -25,7 +25,8 @@ public class GetBalancesQueryHandler(
         }
 
         logger.LogInformation("Fetching balances from Binance for key {Key}", Key);
-        var balances = await binanceService.GetBalancesAsync(cancellationToken);
+        var balancesDto = await binanceService.GetBalancesAsync(cancellationToken);
+        var balances = balancesDto?.Balances.ToDictionary(b => b.Asset, b => b.Free) ?? [];
 
         await cache.SetAsync(Key, JsonSerializer.Serialize(balances), CacheDuration, cancellationToken);
 

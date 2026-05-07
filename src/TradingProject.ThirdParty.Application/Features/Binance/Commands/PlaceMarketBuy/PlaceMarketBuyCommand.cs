@@ -9,6 +9,9 @@ public record PlaceMarketBuyCommand(string Symbol, double QuoteOrderQty) : IRequ
 public class PlaceMarketBuyCommandHandler(IBinanceService binanceService)
     : IRequestHandler<PlaceMarketBuyCommand, OrderResult>
 {
-    public Task<OrderResult> Handle(PlaceMarketBuyCommand request, CancellationToken cancellationToken)
-        => binanceService.PlaceMarketBuyAsync(request.Symbol, request.QuoteOrderQty, cancellationToken);
+    public async Task<OrderResult> Handle(PlaceMarketBuyCommand request, CancellationToken cancellationToken)
+    {
+        var result = await binanceService.PlaceMarketBuyAsync(request.Symbol, request.QuoteOrderQty, cancellationToken);
+        return new OrderResult(result.OrderId.ToString(), result.ExecutedQty, result.CumulativeQuoteQty, result.Price);
+    }
 }
