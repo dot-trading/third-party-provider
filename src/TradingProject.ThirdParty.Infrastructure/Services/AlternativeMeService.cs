@@ -1,6 +1,7 @@
 using System.Text.Json;
 using TradingProject.ThirdParty.Application.Abstractions;
 using TradingProject.ThirdParty.Application.Common.Models;
+using TradingProject.ThirdParty.Domain.Models.Market;
 
 namespace TradingProject.ThirdParty.Infrastructure.Services;
 

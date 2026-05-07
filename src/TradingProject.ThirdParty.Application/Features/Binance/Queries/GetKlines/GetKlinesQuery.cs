@@ -27,7 +27,9 @@ public class GetKlinesQueryHandler(
         }
 
         logger.LogInformation("Fetching klines from Binance for key {Key}", key);
-        var klines = await binanceService.GetKlinesAsync(request.Symbol, request.Interval, request.Limit, cancellationToken);
+        var result = await binanceService.GetKLinesAsync(request.Symbol, request.Interval, request.Limit, cancellationToken);
+
+        var klines = result.Select(k => new Kline(k.OpenTime, k.Open, k.High, k.Low, k.Close, k.Volume)).ToList();
 
         await cache.SetAsync(key, JsonSerializer.Serialize(klines), CacheDuration, cancellationToken);
 

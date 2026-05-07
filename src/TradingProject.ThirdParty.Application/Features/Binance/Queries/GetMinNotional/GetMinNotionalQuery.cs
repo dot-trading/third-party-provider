@@ -27,7 +27,8 @@ public class GetMinNotionalQueryHandler(
         }
 
         logger.LogInformation("Fetching min notional for {Symbol} from Binance", request.Symbol);
-        var minNotional = await binanceService.GetMinNotionalAsync(request.Symbol, cancellationToken);
+        var result = await binanceService.GetMinNotionalAsync(request.Symbol, cancellationToken);
+        var minNotional = result ?? 0;
 
         if (minNotional > 0)
             await cache.SetAsync(key, minNotional.ToString(CultureInfo.InvariantCulture), CacheDuration, cancellationToken);

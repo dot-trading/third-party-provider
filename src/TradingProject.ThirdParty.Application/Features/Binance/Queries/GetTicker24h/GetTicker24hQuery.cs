@@ -27,10 +27,12 @@ public class GetTicker24hQueryHandler(
         }
 
         logger.LogInformation("Fetching 24h ticker from Binance for key {Key}", key);
-        var ticker = await binanceService.GetTicker24hAsync(request.Symbol, cancellationToken);
+        var result = await binanceService.GetTicker24HAsync(request.Symbol, cancellationToken);
 
-        if (ticker is not null)
-            await cache.SetAsync(key, JsonSerializer.Serialize(ticker), CacheDuration, cancellationToken);
+        if (result is null) return null;
+
+        var ticker = new Ticker24h(result.Symbol, result.LastPrice, result.PriceChangePercent, result.QuoteVolume, result.HighPrice, result.LowPrice);
+        await cache.SetAsync(key, JsonSerializer.Serialize(ticker), CacheDuration, cancellationToken);
 
         return ticker;
     }
