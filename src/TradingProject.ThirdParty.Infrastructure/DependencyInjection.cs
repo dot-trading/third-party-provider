@@ -1,7 +1,9 @@
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 using TradingProject.ThirdParty.Application.Abstractions;
 using TradingProject.ThirdParty.Domain.Constants;
 using TradingProject.ThirdParty.Infrastructure.Services;
@@ -16,7 +18,7 @@ public static class DependencyInjection
     {
         ["User-Agent"] = "TradingProject",
     };
-    
+
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton(
@@ -25,21 +27,26 @@ public static class DependencyInjection
         services.AddOptions<BinanceSettings>()
             .Bind(configuration.GetSection(HttpClientNames.Binance))
             .ValidateOnStart();
-        
+
         services.AddOptions<CoinGeckoSettings>()
             .Bind(configuration.GetSection(HttpClientNames.CoinGecko))
             .ValidateOnStart();
-        
+
         services.AddOptions<AlternativeMeSettings>()
             .Bind(configuration.GetSection(HttpClientNames.AlternativeMe))
             .ValidateOnStart();
-        
+
         services.AddOptions<RssNewsSettings>()
             .Bind(configuration.GetSection(HttpClientNames.AlternativeMe))
             .ValidateOnStart();
-        
+
         services.AddOptions<RedisSettings>()
             .Bind(configuration.GetSection("Redis"))
+            .ValidateOnStart();
+
+        services.AddOptions<CacheSettings>()
+            .Bind(configuration.GetSection("Cache"))
+            .ValidateDataAnnotations()
             .ValidateOnStart();
 
         services.AddHttpClient(HttpClientNames.Binance, (sp, client) =>
@@ -47,7 +54,7 @@ public static class DependencyInjection
             var settings = sp.GetRequiredService<IOptions<BinanceSettings>>().Value;
             client.BaseAddress = new Uri(settings.BaseUrl);
             client.WithDefaultRequestHeaders();
-            
+
             client.DefaultRequestHeaders.Add("X-MBX-APIKEY", settings.ApiKey);
         }).AddStandardResilienceHandler();
 
@@ -63,12 +70,12 @@ public static class DependencyInjection
             var settings = sp.GetRequiredService<IOptions<CoinGeckoSettings>>().Value;
             client.BaseAddress = new Uri(settings.BaseUrl);
             client.WithDefaultRequestHeaders();
-            
+
             if (!string.IsNullOrEmpty(settings.ApiKey))
                 client.DefaultRequestHeaders.Add("x-cg-demo-api-key", settings.ApiKey);
         }).AddStandardResilienceHandler();
 
-        
+
         services.AddHttpClient(HttpClientNames.RssNews, client =>
         {
             client.WithDefaultRequestHeaders();
@@ -80,21 +87,50 @@ public static class DependencyInjection
         services.AddTransient<ITimerService, TimerService>();
         services.AddTransient<INewsService, RssNewsService>();
 
+        RegisterCacheService(services);
 
-        services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>
+        return services;
+    }
+
+    private static void RegisterCacheService(IServiceCollection services)
+    {
+        // Singleton ICacheService — resolved once, then reused for the app lifetime.
+        // The factory reads CacheSettings at resolution time to decide which implementation
+        // to create. This keeps the registration code simple and avoids implementing large
+        // interfaces like IConnectionMultiplexer for placeholder objects.
+        services.AddSingleton<ICacheService>(sp =>
         {
-            var settings = sp.GetRequiredService<IOptions<RedisSettings>>().Value;
-            return StackExchange.Redis.ConnectionMultiplexer.Connect(new StackExchange.Redis.ConfigurationOptions
+            var cacheSettings = sp.GetRequiredService<IOptions<CacheSettings>>().Value;
+
+            if (!cacheSettings.Enabled)
+                return new NullCacheService();
+
+            return cacheSettings.Provider switch
             {
-                EndPoints = { settings.ConnectionString },
+                "Memory" => CreateMemoryCacheService(),
+                _        => CreateRedisCacheService(sp),
+            };
+        });
+    }
+
+    private static ICacheService CreateRedisCacheService(IServiceProvider sp)
+    {
+        var redisSettings = sp.GetRequiredService<IOptions<RedisSettings>>().Value;
+        var multiplexer = ConnectionMultiplexer.Connect(
+            new ConfigurationOptions
+            {
+                EndPoints = { redisSettings.ConnectionString },
                 AbortOnConnectFail = false,
                 ConnectRetry = 3,
                 ConnectTimeout = 5000
             });
-        });
-        services.AddSingleton<ICacheService, RedisCacheService>();
+        return new RedisCacheService(multiplexer);
+    }
 
-        return services;
+    private static ICacheService CreateMemoryCacheService()
+    {
+        var memoryCache = new MemoryCache(new MemoryCacheOptions());
+        return new MemoryCacheService(memoryCache);
     }
 
     private static HttpClient WithDefaultRequestHeaders(this HttpClient client)

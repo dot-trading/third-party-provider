@@ -8,10 +8,18 @@ The **Third-Party Provider** is a high-performance ASP.NET Core gateway designed
 
 ---
 
+## 📖 Documentation
+
+| Document | Description |
+| :------- | :---------- |
+| [🔄 Caching](docs/caching.md) | Caching architecture, providers, configuration, keys, and durations |
+
+---
+
 ## ✨ Key Features
 
 *   **Unified API**: Access Binance, CoinGecko, and Sentiment data through a single, clean interface.
-*   **Smart Caching**: Integrated **Redis** caching to minimize upstream calls, stay within free-tier limits, and reduce latency.
+*   **Smart Caching**: Integrated caching with **Redis** (default) or **in-memory** support — see [🔄 Caching](docs/caching.md).
 *   **Resilient HTTP**: Built with **Polly** resilience policies (Retry, Circuit Breaker) to handle transient network failures.
 *   **News Aggregator**: Advanced RSS engine that fetches and filters news from CryptoPanic and major news outlets.
 *   **Strict Validation**: Fail-fast configuration validation to ensure system integrity on startup.
