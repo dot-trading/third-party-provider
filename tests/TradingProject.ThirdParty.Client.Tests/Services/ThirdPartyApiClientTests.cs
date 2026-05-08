@@ -324,4 +324,169 @@ public class ThirdPartyApiClientTests
         result.Should().NotBeNull();
         result!.Price.Should().Be(12345.67);
     }
+
+    [Fact]
+    public async Task GetMinNotionalAsync_WhenApiReturnsValidResponse_ShouldReturnDeserializedResult()
+    {
+        // Arrange
+        const string symbol = "BTCUSDT";
+        var expected = new BinanceNotionalResponse(
+            FilterType: "MIN_NOTIONAL",
+            StepSize: null,
+            MinNotional: 10.0,
+            Notional: null
+        );
+
+        var json = JsonSerializer.Serialize(expected);
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(r =>
+                    r.Method == HttpMethod.Get &&
+                    r.RequestUri!.PathAndQuery == $"/api/v1/Binance/notional/{symbol}"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(json)
+            });
+
+        // Act
+        var result = await _client.GetMinNotionalAsync(symbol, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.FilterType.Should().Be("MIN_NOTIONAL");
+        result.MinNotional.Should().Be(10.0);
+        result.Notional.Should().BeNull();
+        result.StepSize.Should().BeNull();
+
+        _handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(r =>
+                r.Method == HttpMethod.Get &&
+                r.RequestUri!.PathAndQuery == $"/api/v1/Binance/notional/{symbol}"),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetMinNotionalAsync_WhenSymbolIsNull_ShouldThrowArgumentNullException()
+    {
+        // Act
+        var act = () => _client.GetMinNotionalAsync(null!, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task GetMinNotionalAsync_WhenApiReturnsNull_ShouldReturnNull()
+    {
+        // Arrange
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("null")
+            });
+
+        // Act
+        var result = await _client.GetMinNotionalAsync("BTCUSDT", CancellationToken.None);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetMinNotionalAsync_WhenApiReturnsError_ShouldThrowHttpRequestException()
+    {
+        // Arrange
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NotFound
+            });
+
+        // Act
+        var act = () => _client.GetMinNotionalAsync("UNKNOWN", CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<HttpRequestException>();
+    }
+
+    [Fact]
+    public async Task GetMinNotionalAsync_WhenCancelled_ShouldThrowTaskCanceledException()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK
+            });
+
+        // Act
+        var act = () => _client.GetMinNotionalAsync("BTCUSDT", cts.Token);
+
+        // Assert
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
+    public async Task GetMinNotionalAsync_ResponseMatchesV1ApiContract_ShouldDeserializeSuccessfully()
+    {
+        // Arrange — this JSON mirrors what the actual V1 API returns
+        const string v1ApiJson = """
+        {
+            "filterType": "MIN_NOTIONAL",
+            "stepSize": null,
+            "minNotional": 10.0,
+            "notional": null
+        }
+        """;
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(r =>
+                    r.Method == HttpMethod.Get &&
+                    r.RequestUri!.PathAndQuery == "/api/v1/Binance/notional/BTCUSDT"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(v1ApiJson)
+            });
+
+        // Act
+        var result = await _client.GetMinNotionalAsync("BTCUSDT", CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.FilterType.Should().Be("MIN_NOTIONAL");
+        result.MinNotional.Should().Be(10.0);
+        result.Notional.Should().BeNull();
+        result.StepSize.Should().BeNull();
+    }
 }

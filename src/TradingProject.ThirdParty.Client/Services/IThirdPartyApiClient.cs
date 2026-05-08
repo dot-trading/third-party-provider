@@ -24,4 +24,13 @@ public interface IThirdPartyApiClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The price response, or <c>null</c> if the symbol is not found.</returns>
     Task<BinancePriceResponse?> GetPriceAsync(string symbol, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves the MIN_NOTIONAL filter for a trading pair.
+    /// Corresponds to <c>GET /api/v1/Binance/notional/{symbol}</c>.
+    /// </summary>
+    /// <param name="symbol">Trading pair symbol (e.g. "BTCUSDT").</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The min notional filter response, or <c>null</c> if the symbol is not found.</returns>
+    Task<BinanceNotionalResponse?> GetMinNotionalAsync(string symbol, CancellationToken cancellationToken = default);
 }
