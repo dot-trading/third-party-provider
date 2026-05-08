@@ -32,10 +32,10 @@ public class BinanceService : IBinanceService
         _cacheService = cacheService;
 
         if (string.IsNullOrWhiteSpace(settings.Value.ApiKey))
-            throw new AccessViolationException("cannot use binance service without a valid api key");
+            throw new InvalidOperationException("cannot use binance service without a valid api key");
 
         if (string.IsNullOrWhiteSpace(_apiSecret))
-            throw new AccessViolationException("cannot use binance service without a valid api secret");
+            throw new InvalidOperationException("cannot use binance service without a valid api secret");
     }
 
     public async Task<ListBinanceBalanceDto?> GetBalancesAsync(

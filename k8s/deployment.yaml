@@ -44,6 +44,10 @@ spec:
             secretKeyRef:
               name: trading-secrets
               key: coingecko-api-key
+        - name: COINGECKO__BASEURL
+          value: "https://api.coingecko.com/api/v3/"
+        - name: ALTERNATIVEME__BASEURL
+          value: "https://api.alternative.me/"
         resources:
           limits:
             memory: "256Mi"
