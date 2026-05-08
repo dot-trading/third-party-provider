@@ -2,10 +2,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TradingProject.ThirdParty.Infrastructure.Settings;
 
-public class CoinGeckoSettings
+public class AlternativeMeSettings
 {
-    public string? ApiKey { get; set; }
-    
     [Required, Url]
     public required string BaseUrl { get; set; }
 }

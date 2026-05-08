@@ -74,6 +74,7 @@ public record BinanceOrderDto(
     double Price,
     double OrigQty,
     double ExecutedQty,
+    // ReSharper disable once IdentifierTypo
     double CummulativeQuoteQty,
     double CumulativeQuoteQty,
     string Status,
