@@ -196,4 +196,132 @@ public class ThirdPartyApiClientTests
         result.TakerCommission.Should().Be(10);
         result.Permissions.Should().Contain("SPOT").And.Contain("MARGIN");
     }
+
+    [Fact]
+    public async Task GetPriceAsync_WhenApiReturnsValidResponse_ShouldReturnDeserializedResult()
+    {
+        // Arrange
+        const string symbol = "BTCUSDT";
+        const double expectedPrice = 67890.12;
+
+        var json = $$"""
+        {"price": {{expectedPrice}}}
+        """;
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(r =>
+                    r.Method == HttpMethod.Get &&
+                    r.RequestUri!.PathAndQuery == $"/api/v1/Binance/price/{symbol}"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(json)
+            });
+
+        // Act
+        var result = await _client.GetPriceAsync(symbol, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Price.Should().Be(expectedPrice);
+
+        _handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(r =>
+                r.Method == HttpMethod.Get &&
+                r.RequestUri!.PathAndQuery == $"/api/v1/Binance/price/{symbol}"),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetPriceAsync_WhenSymbolIsNull_ShouldThrowArgumentNullException()
+    {
+        // Act
+        var act = () => _client.GetPriceAsync(null!, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task GetPriceAsync_WhenApiReturnsNull_ShouldReturnNull()
+    {
+        // Arrange
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("null")
+            });
+
+        // Act
+        var result = await _client.GetPriceAsync("BTCUSDT", CancellationToken.None);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetPriceAsync_WhenApiReturnsError_ShouldThrowHttpRequestException()
+    {
+        // Arrange
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NotFound
+            });
+
+        // Act
+        var act = () => _client.GetPriceAsync("UNKNOWN", CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<HttpRequestException>();
+    }
+
+    [Fact]
+    public async Task GetPriceAsync_ResponseMatchesV1ApiContract_ShouldDeserializeSuccessfully()
+    {
+        // Arrange — this JSON mirrors what the actual V1 API returns
+        const string v1ApiJson = """
+        {
+            "price": 12345.67
+        }
+        """;
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(r =>
+                    r.Method == HttpMethod.Get &&
+                    r.RequestUri!.PathAndQuery == "/api/v1/Binance/price/BTCUSDT"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(v1ApiJson)
+            });
+
+        // Act
+        var result = await _client.GetPriceAsync("BTCUSDT", CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Price.Should().Be(12345.67);
+    }
 }

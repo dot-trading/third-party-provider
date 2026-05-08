@@ -15,4 +15,13 @@ public interface IThirdPartyApiClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The full balance response, or <c>null</c> if the account is not found.</returns>
     Task<ListBinanceBalanceResponse?> GetBalancesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the current ticker price for a trading pair.
+    /// Corresponds to <c>GET /api/v1/Binance/price/{symbol}</c>.
+    /// </summary>
+    /// <param name="symbol">Trading pair symbol (e.g. "BTCUSDT").</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The price response, or <c>null</c> if the symbol is not found.</returns>
+    Task<BinancePriceResponse?> GetPriceAsync(string symbol, CancellationToken cancellationToken = default);
 }

@@ -27,3 +27,11 @@ public record ListBinanceBalanceResponse(
     [property: JsonPropertyName("takerCommission")] int TakerCommission,
     [property: JsonPropertyName("permissions")] string[] Permissions
 );
+
+/// <summary>
+/// Response returned by <c>GET /api/v{version}/Binance/price/{symbol}</c> (V1+).
+/// </summary>
+/// <param name="Price">Current market price of the trading pair.</param>
+public record BinancePriceResponse(
+    [property: JsonPropertyName("price")] double Price
+);

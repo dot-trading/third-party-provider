@@ -32,7 +32,7 @@ public class BinanceController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetPrice(string symbol, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetPriceQuery(symbol), cancellationToken);
-        return Ok(result);
+        return Ok(result?.Price);
     }
 
     [HttpGet("notional/{symbol}")]
