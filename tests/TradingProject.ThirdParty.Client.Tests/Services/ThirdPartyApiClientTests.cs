@@ -489,4 +489,209 @@ public class ThirdPartyApiClientTests
         result.Notional.Should().BeNull();
         result.StepSize.Should().BeNull();
     }
+
+    [Fact]
+    public async Task GetKlinesAsync_WhenApiReturnsValidResponse_ShouldReturnDeserializedResult()
+    {
+        // Arrange
+        const string symbol = "BTCUSDT";
+        const string interval = "1h";
+        const int limit = 2;
+
+        var expected = new BinanceKLineResponse[]
+        {
+            new(OpenTime: 1700000000000, Open: 50000.0, High: 51000.0, Low: 49000.0, Close: 50500.0, Volume: 100.5),
+            new(OpenTime: 1700003600000, Open: 50500.0, High: 51500.0, Low: 49500.0, Close: 51000.0, Volume: 200.0)
+        };
+
+        var json = JsonSerializer.Serialize(expected);
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(r =>
+                    r.Method == HttpMethod.Get &&
+                    r.RequestUri!.PathAndQuery == $"/api/v1/Binance/klines/{symbol}?interval={interval}&limit={limit}"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(json)
+            });
+
+        // Act
+        var result = await _client.GetKlinesAsync(symbol, interval, limit, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Should().HaveCount(2);
+        result[0].OpenTime.Should().Be(1700000000000);
+        result[0].Open.Should().Be(50000.0);
+        result[0].High.Should().Be(51000.0);
+        result[0].Low.Should().Be(49000.0);
+        result[0].Close.Should().Be(50500.0);
+        result[0].Volume.Should().Be(100.5);
+        result[1].OpenTime.Should().Be(1700003600000);
+        result[1].Open.Should().Be(50500.0);
+        result[1].Close.Should().Be(51000.0);
+
+        _handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(r =>
+                r.Method == HttpMethod.Get &&
+                r.RequestUri!.PathAndQuery == $"/api/v1/Binance/klines/{symbol}?interval={interval}&limit={limit}"),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetKlinesAsync_WhenSymbolIsNull_ShouldThrowArgumentNullException()
+    {
+        // Act
+        var act = () => _client.GetKlinesAsync(null!, cancellationToken: CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task GetKlinesAsync_WhenIntervalIsNull_ShouldThrowArgumentNullException()
+    {
+        // Act
+        var act = () => _client.GetKlinesAsync("BTCUSDT", null!, cancellationToken: CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task GetKlinesAsync_WhenApiReturnsEmptyArray_ShouldReturnEmptyArray()
+    {
+        // Arrange
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("[]")
+            });
+
+        // Act
+        var result = await _client.GetKlinesAsync("BTCUSDT", cancellationToken: CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetKlinesAsync_WhenApiReturnsError_ShouldThrowHttpRequestException()
+    {
+        // Arrange
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest
+            });
+
+        // Act
+        var act = () => _client.GetKlinesAsync("UNKNOWN", cancellationToken: CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<HttpRequestException>();
+    }
+
+    [Fact]
+    public async Task GetKlinesAsync_WhenCancelled_ShouldThrowTaskCanceledException()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK
+            });
+
+        // Act
+        var act = () => _client.GetKlinesAsync("BTCUSDT", cancellationToken: cts.Token);
+
+        // Assert
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
+    public async Task GetKlinesAsync_ResponseMatchesV1ApiContract_ShouldDeserializeSuccessfully()
+    {
+        // Arrange — this JSON mirrors what the actual V1 API returns
+        const string v1ApiJson = """
+        [
+            {
+                "openTime": 1700000000000,
+                "open": 50000.0,
+                "high": 51000.0,
+                "low": 49000.0,
+                "close": 50500.0,
+                "volume": 100.5
+            },
+            {
+                "openTime": 1700003600000,
+                "open": 50500.0,
+                "high": 51500.0,
+                "low": 49500.0,
+                "close": 51000.0,
+                "volume": 200.0
+            }
+        ]
+        """;
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(r =>
+                    r.Method == HttpMethod.Get &&
+                    r.RequestUri!.PathAndQuery == "/api/v1/Binance/klines/BTCUSDT?interval=1h&limit=24"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(v1ApiJson)
+            });
+
+        // Act
+        var result = await _client.GetKlinesAsync("BTCUSDT", cancellationToken: CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Should().HaveCount(2);
+        result[0].OpenTime.Should().Be(1700000000000);
+        result[0].Open.Should().Be(50000.0);
+        result[0].High.Should().Be(51000.0);
+        result[0].Low.Should().Be(49000.0);
+        result[0].Close.Should().Be(50500.0);
+        result[0].Volume.Should().Be(100.5);
+        result[1].OpenTime.Should().Be(1700003600000);
+        result[1].Open.Should().Be(50500.0);
+        result[1].High.Should().Be(51500.0);
+        result[1].Low.Should().Be(49500.0);
+        result[1].Close.Should().Be(51000.0);
+        result[1].Volume.Should().Be(200.0);
+    }
 }

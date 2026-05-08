@@ -102,4 +102,35 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
             throw;
         }
     }
+
+    /// <inheritdoc />
+    public async Task<BinanceKLineResponse[]?> GetKlinesAsync(
+        string symbol,
+        string interval = "1h",
+        int limit = 24,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(symbol);
+        ArgumentNullException.ThrowIfNull(interval);
+
+        try
+        {
+            _logger.LogDebug("Fetching klines for symbol {Symbol}, interval {Interval}, limit {Limit} from ThirdParty API (V1)", symbol, interval, limit);
+
+            var url = $"api/v1/Binance/klines/{symbol}?interval={Uri.EscapeDataString(interval)}&limit={limit}";
+            var response = await _httpClient.GetAsync(url, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<BinanceKLineResponse[]>(JsonOptions, cancellationToken);
+
+            _logger.LogDebug("Successfully retrieved {Count} klines for symbol {Symbol}", result?.Length ?? 0, symbol);
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to fetch klines for symbol {Symbol} from ThirdParty API", symbol);
+            throw;
+        }
+    }
 }

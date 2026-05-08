@@ -11,7 +11,7 @@ public interface IBinanceService
         string symbol,
         CancellationToken cancellationToken = default);
     
-    Task<KLine[]> GetKLinesAsync(
+    Task<KLineDto[]> GetKLinesAsync(
         string symbol,
         string interval = "1h",
         int limit = 24,

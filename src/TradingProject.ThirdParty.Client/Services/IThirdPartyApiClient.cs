@@ -33,4 +33,19 @@ public interface IThirdPartyApiClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The min notional filter response, or <c>null</c> if the symbol is not found.</returns>
     Task<BinanceNotionalResponse?> GetMinNotionalAsync(string symbol, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves K-Line (candlestick) data for a trading pair.
+    /// Corresponds to <c>GET /api/v1/Binance/klines/{symbol}?interval=...&amp;limit=...</c>.
+    /// </summary>
+    /// <param name="symbol">Trading pair symbol (e.g. "BTCUSDT").</param>
+    /// <param name="interval">K-Line interval (e.g. "1h", "1d"). Defaults to "1h".</param>
+    /// <param name="limit">Number of candles to retrieve. Defaults to 24.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>An array of K-Line data points, or an empty array if no data is available.</returns>
+    Task<BinanceKLineResponse[]?> GetKlinesAsync(
+        string symbol,
+        string interval = "1h",
+        int limit = 24,
+        CancellationToken cancellationToken = default);
 }

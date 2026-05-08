@@ -8,7 +8,7 @@ public record ListBinanceBalanceDto(
     int TakerCommission,
     string[] Permissions);
 
-public record KLine(
+public record KLineDto(
     long OpenTime,
     double Open,
     double High,

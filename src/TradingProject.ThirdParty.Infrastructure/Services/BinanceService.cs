@@ -71,7 +71,7 @@ public class BinanceService : IBinanceService
             await response.Content.ReadAsStreamAsync(cancellationToken), _jsonOptions, cancellationToken);
     }
 
-    public async Task<KLine[]> GetKLinesAsync(string symbol, string interval = "1h", int limit = 24,
+    public async Task<KLineDto[]> GetKLinesAsync(string symbol, string interval = "1h", int limit = 24,
         CancellationToken cancellationToken = default)
     {
         var url = $"/api/v3/klines?symbol={symbol}&interval={interval}&limit={limit}";
@@ -86,7 +86,7 @@ public class BinanceService : IBinanceService
         var dataArray = doc.RootElement.EnumerateArray().Select(k =>
         {
             var arr = k.EnumerateArray().ToArray();
-            return new KLine(
+            return new KLineDto(
                 OpenTime: arr[0].GetInt64(),
                 Open: double.Parse(arr[1].GetString()!, System.Globalization.CultureInfo.InvariantCulture),
                 High: double.Parse(arr[2].GetString()!, System.Globalization.CultureInfo.InvariantCulture),
