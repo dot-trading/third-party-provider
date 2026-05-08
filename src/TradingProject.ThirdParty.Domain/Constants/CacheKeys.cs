@@ -9,9 +9,9 @@ namespace TradingProject.ThirdParty.Domain.Constants;
 /// </summary>
 public static class CacheKeys
 {
-    
-    public const string ServiceNamePrefix = "ThridParty:";
-    
+
+    public const string ServiceNamePrefix = "ThirdParty:";
+
     // ========================================================================
     // Binance
     // ========================================================================
