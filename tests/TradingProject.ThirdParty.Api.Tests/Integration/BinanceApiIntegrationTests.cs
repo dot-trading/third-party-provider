@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -54,7 +55,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
 
         _binanceServiceMock.Setup(s => s.GetBalancesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(balancesDto);
-        
+
         _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
@@ -88,7 +89,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
 
         _binanceServiceMock.Setup(s => s.GetBalancesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(balancesDto);
-        
+
         _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
@@ -106,6 +107,78 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
     }
 
     [Fact]
+    public async Task GetBalancesBySymbol_V1_WhenFound_ShouldReturnFilteredBalances()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var symbol = "BTCUSDT";
+        var allBalancesDto = new ListBinanceBalanceDto(
+            new[]
+            {
+                new BinanceBalanceDto("BTC", 1.5, 0.5),
+                new BinanceBalanceDto("USDT", 100.0, 0.0),
+                new BinanceBalanceDto("ETH", 10.0, 0.0)
+            },
+            0,
+            0,
+            []
+        );
+        var exchangeInfoDto = new BinanceExchangeInfoDto
+        {
+            Symbols =
+            [
+                new BinanceSymbolDto(
+                    BaseAsset: "BTC",
+                    QuoteAsset: "USDT",
+                    Filters: []
+                )
+            ]
+        };
+
+        _binanceServiceMock.Setup(s => s.GetBalancesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(allBalancesDto);
+
+        _binanceServiceMock.Setup(s => s.GetExchangeInfoAsync(symbol, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(exchangeInfoDto);
+
+        _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var response = await client.GetAsync($"/api/v1.0/Binance/balances/{symbol}");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<ListBinanceBalanceDto>();
+        result.Should().NotBeNull();
+        result!.Balances.Should().HaveCount(2);
+        result.Balances[0].Asset.Should().Be("BTC");
+        result.Balances[0].Free.Should().Be(1.5);
+        result.Balances[1].Asset.Should().Be("USDT");
+        result.Balances[1].Free.Should().Be(100.0);
+    }
+
+    [Fact]
+    public async Task GetBalancesBySymbol_V1_WhenSymbolNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var symbol = "UNKNOWN";
+
+        _binanceServiceMock.Setup(s => s.GetExchangeInfoAsync(symbol, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BinanceExchangeInfoDto?)null);
+
+        _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var response = await client.GetAsync($"/api/v1.0/Binance/balances/{symbol}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
     public async Task GetPrice_V0_ShouldReturnDouble()
     {
         // Arrange
@@ -115,7 +188,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
 
         _binanceServiceMock.Setup(s => s.GetCurrentPriceAsync(symbol, It.IsAny<CancellationToken>()))
             .ReturnsAsync(priceDto);
-        
+
         _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
@@ -138,7 +211,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
 
         _binanceServiceMock.Setup(s => s.GetCurrentPriceAsync(symbol, It.IsAny<CancellationToken>()))
             .ReturnsAsync(priceDto);
-        
+
         _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
@@ -162,7 +235,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
 
         _binanceServiceMock.Setup(s => s.GetMinNotionalAsync(symbol, It.IsAny<CancellationToken>()))
             .ReturnsAsync(filterDto);
-        
+
         _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
@@ -185,7 +258,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
 
         _binanceServiceMock.Setup(s => s.GetMinNotionalAsync(symbol, It.IsAny<CancellationToken>()))
             .ReturnsAsync(filterDto);
-        
+
         _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
@@ -213,7 +286,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
 
         _binanceServiceMock.Setup(s => s.GetKLinesAsync(symbol, "1h", 24, It.IsAny<CancellationToken>()))
             .ReturnsAsync(klinesDto);
-        
+
         _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
@@ -242,7 +315,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
 
         _binanceServiceMock.Setup(s => s.GetKLinesAsync(symbol, "1h", 24, It.IsAny<CancellationToken>()))
             .ReturnsAsync(klinesDto);
-        
+
         _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
@@ -268,7 +341,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
 
         _binanceServiceMock.Setup(s => s.GetTicker24HAsync(symbol, It.IsAny<CancellationToken>()))
             .ReturnsAsync(tickerDto);
-        
+
         _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
@@ -293,7 +366,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
 
         _binanceServiceMock.Setup(s => s.GetTicker24HAsync(symbol, It.IsAny<CancellationToken>()))
             .ReturnsAsync(tickerDto);
-        
+
         _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 

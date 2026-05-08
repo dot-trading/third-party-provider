@@ -81,6 +81,7 @@ public class MyService(IThirdPartyApiClient client)
 | Client Method               | API Endpoint                       | Version |
 | :-------------------------- | :--------------------------------- | :------ |
 | `GetBalancesAsync()`            | `GET /api/v1/Binance/balances`          | V1      |
+| `GetBalancesAsync(symbol)`      | `GET /api/v1/Binance/balances/{symbol}`  | V1      |
 | `GetPriceAsync(symbol)`         | `GET /api/v1/Binance/price/{symbol}`     | V1      |
 | `GetMinNotionalAsync(symbol)`   | `GET /api/v1/Binance/notional/{symbol}`  | V1      |
 | `GetKlinesAsync(symbol, ...)`   | `GET /api/v1/Binance/klines/{symbol}`    | V1      |

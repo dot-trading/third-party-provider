@@ -866,4 +866,182 @@ public class ThirdPartyApiClientTests
         result.HighPrice.Should().Be(51000.0);
         result.LowPrice.Should().Be(49000.0);
     }
+
+    [Fact]
+    public async Task GetBalancesBySymbolAsync_WhenApiReturnsValidResponse_ShouldReturnDeserializedResult()
+    {
+        // Arrange
+        const string symbol = "BTCUSDT";
+        var expected = new ListBinanceBalanceResponse(
+            Balances:
+            [
+                new BinanceBalanceDto("BTC", 1.5, 0.5),
+                new BinanceBalanceDto("USDT", 100.0, 0.0)
+            ],
+            MakerCommission: 10,
+            TakerCommission: 10,
+            Permissions: ["SPOT"]
+        );
+
+        var json = JsonSerializer.Serialize(expected);
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(r =>
+                    r.Method == HttpMethod.Get &&
+                    r.RequestUri!.PathAndQuery == $"/api/v1/Binance/balances/{symbol}"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(json)
+            });
+
+        // Act
+        var result = await _client.GetBalancesAsync(symbol, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Balances.Should().HaveCount(2);
+        result.Balances[0].Asset.Should().Be("BTC");
+        result.Balances[0].Free.Should().Be(1.5);
+        result.Balances[0].Locked.Should().Be(0.5);
+        result.Balances[1].Asset.Should().Be("USDT");
+        result.Balances[1].Free.Should().Be(100.0);
+
+        _handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(r =>
+                r.Method == HttpMethod.Get &&
+                r.RequestUri!.PathAndQuery == $"/api/v1/Binance/balances/{symbol}"),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetBalancesBySymbolAsync_WhenSymbolIsNull_ShouldThrowArgumentNullException()
+    {
+        // Act
+        var act = () => _client.GetBalancesAsync(null!, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task GetBalancesBySymbolAsync_WhenApiReturnsNotFound_ShouldReturnNull()
+    {
+        // Arrange
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NotFound
+            });
+
+        // Act
+        var result = await _client.GetBalancesAsync("UNKNOWN", CancellationToken.None);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetBalancesBySymbolAsync_WhenApiReturnsError_ShouldThrowHttpRequestException()
+    {
+        // Arrange
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+        // Act
+        var act = () => _client.GetBalancesAsync("BTCUSDT", CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<HttpRequestException>();
+    }
+
+    [Fact]
+    public async Task GetBalancesBySymbolAsync_WhenCancelled_ShouldThrowTaskCanceledException()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK
+            });
+
+        // Act
+        var act = () => _client.GetBalancesAsync("BTCUSDT", cts.Token);
+
+        // Assert
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
+    public async Task GetBalancesBySymbolAsync_ResponseMatchesV1ApiContract_ShouldDeserializeSuccessfully()
+    {
+        // Arrange — this JSON mirrors what the actual V1 API returns
+        const string v1ApiJson = """
+        {
+            "balances": [
+                { "asset": "BTC",  "free": 1.5, "locked": 0.5 },
+                { "asset": "USDT", "free": 100.0, "locked": 0.0 }
+            ],
+            "makerCommission": 10,
+            "takerCommission": 10,
+            "permissions": ["SPOT"]
+        }
+        """;
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(r =>
+                    r.Method == HttpMethod.Get &&
+                    r.RequestUri!.PathAndQuery == "/api/v1/Binance/balances/BTCUSDT"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(v1ApiJson)
+            });
+
+        // Act
+        var result = await _client.GetBalancesAsync("BTCUSDT", CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Balances.Should().HaveCount(2);
+        result.Balances[0].Asset.Should().Be("BTC");
+        result.Balances[0].Free.Should().Be(1.5);
+        result.Balances[0].Locked.Should().Be(0.5);
+        result.Balances[1].Asset.Should().Be("USDT");
+        result.Balances[1].Free.Should().Be(100.0);
+        result.MakerCommission.Should().Be(10);
+        result.TakerCommission.Should().Be(10);
+        result.Permissions.Should().Contain("SPOT");
+    }
 }

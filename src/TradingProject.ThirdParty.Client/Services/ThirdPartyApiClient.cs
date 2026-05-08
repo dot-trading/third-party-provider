@@ -55,6 +55,38 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
     }
 
     /// <inheritdoc />
+    public async Task<ListBinanceBalanceResponse?> GetBalancesAsync(string symbol, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(symbol);
+
+        try
+        {
+            _logger.LogDebug("Fetching balances for symbol {Symbol} from ThirdParty API (V1)", symbol);
+
+            var response = await _httpClient.GetAsync($"api/v1/Binance/balances/{symbol}", cancellationToken);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                _logger.LogDebug("Balances not found for symbol {Symbol}", symbol);
+                return null;
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<ListBinanceBalanceResponse>(JsonOptions, cancellationToken);
+
+            _logger.LogDebug("Successfully retrieved {BalanceCount} balances for symbol {Symbol}", result?.Balances?.Length ?? 0, symbol);
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to fetch balances for symbol {Symbol} from ThirdParty API", symbol);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<BinancePriceResponse?> GetPriceAsync(string symbol, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(symbol);
