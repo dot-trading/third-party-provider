@@ -1,10 +1,13 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetBalances;
 
 namespace TradingProject.ThirdParty.Api.Controllers;
 
 [ApiController]
+[ApiVersion("0.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Route("api/[controller]")]
 public class AccountController(IMediator mediator) : ControllerBase
 {

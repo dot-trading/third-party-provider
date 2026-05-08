@@ -1,11 +1,14 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using TradingProject.ThirdParty.Application.Features.Binance.Commands.PlaceMarketBuy;
 using TradingProject.ThirdParty.Application.Features.Binance.Commands.PlaceMarketSell;
 
 namespace TradingProject.ThirdParty.Api.Controllers;
 
 [ApiController]
+[ApiVersion("0.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
 [Route("api/[controller]")]
 public class TradingController(IMediator mediator) : ControllerBase
 {
