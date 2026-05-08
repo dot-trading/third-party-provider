@@ -21,8 +21,11 @@ public class BinanceController(IMediator mediator) : ControllerBase
     [HttpGet("balances")]
     public async Task<IActionResult> GetBalances(CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new GetBalancesQuery(), cancellationToken);
-        return Ok(result);
+        var data = await mediator.Send(new GetBalancesQuery(), cancellationToken);
+        var balances = data?.Balances
+            .ToDictionary(b => b.Asset, b => b.Free) ?? [];
+        
+        return Ok(balances);
     }
 
     [HttpGet("price/{symbol}")]

@@ -11,7 +11,6 @@ using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetMinNotio
 
 namespace TradingProject.ThirdParty.Api.Controllers.V1;
 
-[Obsolete("This controller is deprecated. Please use the specialized providers controllers instead.")]
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
