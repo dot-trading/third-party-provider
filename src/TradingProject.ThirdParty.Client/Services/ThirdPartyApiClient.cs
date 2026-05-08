@@ -77,4 +77,29 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
             throw;
         }
     }
+
+    /// <inheritdoc />
+    public async Task<BinanceNotionalResponse?> GetMinNotionalAsync(string symbol, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(symbol);
+
+        try
+        {
+            _logger.LogDebug("Fetching min notional for symbol {Symbol} from ThirdParty API (V1)", symbol);
+
+            var response = await _httpClient.GetAsync($"api/v1/Binance/notional/{symbol}", cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<BinanceNotionalResponse>(JsonOptions, cancellationToken);
+
+            _logger.LogDebug("Successfully retrieved min notional for symbol {Symbol}", symbol);
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to fetch min notional for symbol {Symbol} from ThirdParty API", symbol);
+            throw;
+        }
+    }
 }

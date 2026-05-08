@@ -35,3 +35,18 @@ public record ListBinanceBalanceResponse(
 public record BinancePriceResponse(
     [property: JsonPropertyName("price")] double Price
 );
+
+/// <summary>
+/// Response returned by <c>GET /api/v{version}/Binance/notional/{symbol}</c> (V1+).
+/// Contains the MIN_NOTIONAL filter information for a trading pair.
+/// </summary>
+/// <param name="FilterType">The type of the filter (e.g. "MIN_NOTIONAL").</param>
+/// <param name="StepSize">Step size for LOT_SIZE filter (null for MIN_NOTIONAL).</param>
+/// <param name="MinNotional">The minimum notional value (older field name).</param>
+/// <param name="Notional">The minimum notional value (newer field name).</param>
+public record BinanceNotionalResponse(
+    [property: JsonPropertyName("filterType")] string FilterType,
+    [property: JsonPropertyName("stepSize")] double? StepSize,
+    [property: JsonPropertyName("minNotional")] double? MinNotional,
+    [property: JsonPropertyName("notional")] double? Notional
+);
