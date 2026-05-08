@@ -17,21 +17,21 @@ namespace TradingProject.ThirdParty.Api.Controllers.V1;
 public class BinanceController(IMediator mediator) : ControllerBase
 {
     [HttpGet("balances")]
-    public async Task<IActionResult> GetBalances(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetBalancesAsync(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetBalancesQuery(), cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("price/{symbol}")]
-    public async Task<IActionResult> GetPrice(string symbol, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetPriceAsync(string symbol, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetPriceQuery(symbol), cancellationToken);
         return Ok(result);
     }
 
     [HttpGet("notional/{symbol}")]
-    public async Task<IActionResult> GetMinNotional(string symbol, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetMinNotionalAsync(string symbol, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetMinNotionalQuery(symbol), cancellationToken);
         return Ok(result);

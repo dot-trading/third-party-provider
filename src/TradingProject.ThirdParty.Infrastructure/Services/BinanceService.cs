@@ -141,7 +141,7 @@ public class BinanceService : IBinanceService
             cancellationToken);
 
         if (binanceOrderDto is null)
-            throw new ArgumentNullException(nameof(binanceOrderDto));
+            throw new InvalidOperationException("Failed to deserialize Binance order response: the response body was empty or malformed.");
 
         // MARKET orders always return price = 0 — there is no fixed price since the order fills
         // at whatever the order book offers, potentially across multiple positions.
@@ -175,18 +175,50 @@ public class BinanceService : IBinanceService
     public async Task<BinanceOrderDto> PlaceMarketSellAsync(string symbol, double quantity,
         CancellationToken cancellationToken = default)
     {
-        var stepSize = await GetLotStepSizeAsync(symbol, cancellationToken);
+        var stepSizeObject = await GetLotStepSizeAsync(symbol, cancellationToken);
 
-        if (stepSize is null or <= 0)
+        if (stepSizeObject is null || stepSizeObject.StepSizeValue is null or <= 0)
         {
             throw new InvalidOperationException($"Cannot place order: LotStepSize missing or invalid for {symbol}");
         }
 
-        var alignedQty = Math.Truncate(quantity / stepSize.Value) * stepSize.Value;
-        var decimals = Math.Max(0, -(int)Math.Floor(Math.Log10(stepSize.Value)));
+        var stepSizeValue = stepSizeObject.StepSizeValue.Value;
+
+        // Align quantity to LOT_SIZE step size by truncating down
+        var alignedQty = Math.Truncate(quantity / stepSizeValue) * stepSizeValue;
+
+        // Guard against zero-quantity orders (quantity smaller than one step)
+        if (alignedQty <= 0)
+        {
+            throw new InvalidOperationException(
+                $"Cannot place order for {symbol}: quantity {quantity} after LOT_SIZE alignment is zero or negative. " +
+                $"The quantity is below the minimum step size of {stepSizeValue}.");
+        }
+
+        // Validate against MIN_NOTIONAL filter
+        var minNotionalObject = await GetMinNotionalAsync(symbol, cancellationToken);
+        var minNotional = minNotionalObject?.NotionalValue;
+        if (minNotional.HasValue && minNotional.Value > 0)
+        {
+            var priceDto = await GetCurrentPriceAsync(symbol, cancellationToken);
+            if (priceDto?.Price > 0)
+            {
+                var orderValue = alignedQty * priceDto.Price;
+                if (orderValue < minNotional.Value)
+                {
+                    throw new InvalidOperationException(
+                        $"Cannot place order for {symbol}: order value {orderValue} is below the minimum notional of {minNotional.Value}.");
+                }
+            }
+        }
+
+        // Calculate decimal places from step size (e.g., stepSize=0.001 → decimals=3)
+        var decimals = Math.Max(0, (int)Math.Round(-Math.Log10(stepSizeValue)));
         var qty = alignedQty.ToString($"F{decimals}", System.Globalization.CultureInfo.InvariantCulture);
+
         var timestamp = _timerService.BinanceNowDateTimeOffset();
-        var query = $"symbol={symbol}&side=SELL&type=MARKET&quantity={qty}&timestamp={timestamp}";
+        var encodedSymbol = Uri.EscapeDataString(symbol);
+        var query = $"symbol={encodedSymbol}&side=SELL&type=MARKET&quantity={qty}&newOrderRespType=RESULT&recvWindow=5000&timestamp={timestamp}";
         return await PlaceOrderAsync(query, cancellationToken);
     }
 
@@ -225,7 +257,7 @@ public class BinanceService : IBinanceService
     /// </para>
     /// </summary>
     /// <returns>The step size, or <c>null</c> if the filter or exchange info could not be retrieved.</returns>
-    public async Task<double?> GetLotStepSizeAsync(
+    public async Task<BinanceFilterDto?> GetLotStepSizeAsync(
         string symbol,
         CancellationToken cancellationToken = default)
     {
@@ -233,12 +265,11 @@ public class BinanceService : IBinanceService
         return exchangeInfo?.LotStepSize();
     }
 
-    public async Task<double?> GetMinNotionalAsync(string symbol, CancellationToken cancellationToken = default)
+    public async Task<BinanceFilterDto?> GetMinNotionalAsync(string symbol, CancellationToken cancellationToken = default)
     {
         var exchangeInfo = await GetExchangeInfoAsync(symbol, cancellationToken);
         return exchangeInfo?.MinNotional();
     }
-
 
     private static string Sign(string data, string secret)
     {

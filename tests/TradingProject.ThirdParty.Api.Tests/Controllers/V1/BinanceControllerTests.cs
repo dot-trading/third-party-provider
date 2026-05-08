@@ -6,6 +6,7 @@ using TradingProject.ThirdParty.Api.Controllers.V1;
 using TradingProject.ThirdParty.Application.Common.Models;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetBalances;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetPrice;
+using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetMinNotional;
 using Xunit;
 
 namespace TradingProject.ThirdParty.Api.Tests.Controllers.V1;
@@ -41,7 +42,7 @@ public class BinanceControllerTests
             .ReturnsAsync(expectedDto);
 
         // Act
-        var result = await _controller.GetBalances(cancellationToken);
+        var result = await _controller.GetBalancesAsync(cancellationToken);
 
         // Assert
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
@@ -61,11 +62,31 @@ public class BinanceControllerTests
             .ReturnsAsync(expectedDto);
 
         // Act
-        var result = await _controller.GetPrice(symbol, cancellationToken);
+        var result = await _controller.GetPriceAsync(symbol, cancellationToken);
 
         // Assert
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         okResult.Value.Should().BeEquivalentTo(expectedDto);
         _mediatorMock.Verify(m => m.Send(It.Is<GetPriceQuery>(q => q.Symbol == symbol), cancellationToken), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetMinNotionalAsync_ShouldReturnOkWithFullDto()
+    {
+        // Arrange
+        var symbol = "BTCUSDT";
+        var cancellationToken = CancellationToken.None;
+        var expectedDto = new BinanceFilterDto("MIN_NOTIONAL", null, 10.0, null);
+
+        _mediatorMock.Setup(m => m.Send(It.IsAny<GetMinNotionalQuery>(), cancellationToken))
+            .ReturnsAsync(expectedDto);
+
+        // Act
+        var result = await _controller.GetMinNotionalAsync(symbol, cancellationToken);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().BeEquivalentTo(expectedDto);
+        _mediatorMock.Verify(m => m.Send(It.Is<GetMinNotionalQuery>(q => q.Symbol == symbol), cancellationToken), Times.Once);
     }
 }

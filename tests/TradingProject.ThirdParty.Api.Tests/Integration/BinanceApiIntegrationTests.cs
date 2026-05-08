@@ -150,4 +150,52 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
         result.Should().NotBeNull();
         result!.Price.Should().Be(50000.0);
     }
+
+    [Fact]
+    public async Task GetMinNotional_V0_ShouldReturnDouble()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var symbol = "BTCUSDT";
+        var filterDto = new BinanceFilterDto("MIN_NOTIONAL", null, 10.0, null);
+
+        _binanceServiceMock.Setup(s => s.GetMinNotionalAsync(symbol, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(filterDto);
+        
+        _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var response = await client.GetAsync($"/api/v0.0/Binance/notional/{symbol}");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var value = await response.Content.ReadFromJsonAsync<double>();
+        value.Should().Be(10.0);
+    }
+
+    [Fact]
+    public async Task GetMinNotional_V1_ShouldReturnFullDto()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var symbol = "BTCUSDT";
+        var filterDto = new BinanceFilterDto("MIN_NOTIONAL", null, 10.0, null);
+
+        _binanceServiceMock.Setup(s => s.GetMinNotionalAsync(symbol, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(filterDto);
+        
+        _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var response = await client.GetAsync($"/api/v1.0/Binance/notional/{symbol}");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<BinanceFilterDto>();
+        result.Should().NotBeNull();
+        result!.MinNotional.Should().Be(10.0);
+        result.FilterType.Should().Be("MIN_NOTIONAL");
+    }
 }
