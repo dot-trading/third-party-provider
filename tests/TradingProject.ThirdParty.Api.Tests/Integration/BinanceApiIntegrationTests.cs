@@ -198,4 +198,62 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
         result!.MinNotional.Should().Be(10.0);
         result.FilterType.Should().Be("MIN_NOTIONAL");
     }
+
+    [Fact]
+    public async Task GetKlines_V0_ShouldReturnFullDto()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var symbol = "BTCUSDT";
+        var klinesDto = new[]
+        {
+            new KLineDto(1715112000000, 50000.0, 51000.0, 49000.0, 50500.0, 100.0)
+        };
+
+        _binanceServiceMock.Setup(s => s.GetKLinesAsync(symbol, "1h", 24, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(klinesDto);
+        
+        _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var response = await client.GetAsync($"/api/v0.0/Binance/klines/{symbol}?interval=1h&limit=24");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<KLineDto[]>();
+        result.Should().NotBeNull();
+        result.Should().HaveCount(1);
+        result![0].OpenTime.Should().Be(1715112000000);
+        result[0].Close.Should().Be(50500.0);
+    }
+
+    [Fact]
+    public async Task GetKlines_V1_ShouldReturnFullDto()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var symbol = "BTCUSDT";
+        var klinesDto = new[]
+        {
+            new KLineDto(1715112000000, 50000.0, 51000.0, 49000.0, 50500.0, 100.0)
+        };
+
+        _binanceServiceMock.Setup(s => s.GetKLinesAsync(symbol, "1h", 24, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(klinesDto);
+        
+        _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var response = await client.GetAsync($"/api/v1.0/Binance/klines/{symbol}?interval=1h&limit=24");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<KLineDto[]>();
+        result.Should().NotBeNull();
+        result.Should().HaveCount(1);
+        result![0].OpenTime.Should().Be(1715112000000);
+        result[0].Close.Should().Be(50500.0);
+    }
 }

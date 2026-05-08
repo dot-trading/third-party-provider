@@ -7,6 +7,7 @@ using TradingProject.ThirdParty.Application.Common.Models;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetBalances;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetPrice;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetMinNotional;
+using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetKlines;
 using Xunit;
 
 namespace TradingProject.ThirdParty.Api.Tests.Controllers.V1;
@@ -88,5 +89,28 @@ public class BinanceControllerTests
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         okResult.Value.Should().BeEquivalentTo(expectedDto);
         _mediatorMock.Verify(m => m.Send(It.Is<GetMinNotionalQuery>(q => q.Symbol == symbol), cancellationToken), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetKlines_ShouldReturnOkWithFullDto()
+    {
+        // Arrange
+        var symbol = "BTCUSDT";
+        var cancellationToken = CancellationToken.None;
+        var expectedDto = new[]
+        {
+            new KLineDto(1715112000000, 50000.0, 51000.0, 49000.0, 50500.0, 100.0)
+        };
+
+        _mediatorMock.Setup(m => m.Send(It.IsAny<GetKlinesQuery>(), cancellationToken))
+            .ReturnsAsync(expectedDto);
+
+        // Act
+        var result = await _controller.GetKlinesAsync(symbol, "1h", 24, cancellationToken);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().BeEquivalentTo(expectedDto);
+        _mediatorMock.Verify(m => m.Send(It.IsAny<GetKlinesQuery>(), cancellationToken), Times.Once);
     }
 }

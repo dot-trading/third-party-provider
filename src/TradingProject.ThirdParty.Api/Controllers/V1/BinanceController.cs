@@ -38,7 +38,11 @@ public class BinanceController(IMediator mediator) : ControllerBase
     }
 
     [HttpGet("klines/{symbol}")]
-    public async Task<IActionResult> GetKlines(string symbol, [FromQuery] string interval = "1h", [FromQuery] int limit = 24, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetKlinesAsync(
+        string symbol,
+        [FromQuery] string interval = "1h",
+        [FromQuery] int limit = 24,
+        CancellationToken cancellationToken = default)
     {
         var result = await mediator.Send(new GetKlinesQuery(symbol, interval, limit), cancellationToken);
         return Ok(result);

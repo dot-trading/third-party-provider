@@ -83,11 +83,11 @@ public class MyService(IThirdPartyApiClient client)
 | `GetBalancesAsync()`            | `GET /api/v1/Binance/balances`          | V1      |
 | `GetPriceAsync(symbol)`         | `GET /api/v1/Binance/price/{symbol}`     | V1      |
 | `GetMinNotionalAsync(symbol)`   | `GET /api/v1/Binance/notional/{symbol}`  | V1      |
+| `GetKlinesAsync(symbol, ...)`   | `GET /api/v1/Binance/klines/{symbol}`    | V1      |
 
 ### 🔜 Coming Soon (V1+)
 
 | Client Method                  | API Endpoint                          |
-| `GetKlinesAsync(symbol, ...)`  | `GET /api/v1/Binance/klines/{symbol}` |
 | `GetTicker24hAsync(symbol)`    | `GET /api/v1/Binance/ticker/{symbol}` |
 | `PlaceMarketBuyAsync(...)`     | `POST /api/v1/Binance/order/buy`      |
 | `PlaceMarketSellAsync(...)`    | `POST /api/v1/Binance/order/sell`     |

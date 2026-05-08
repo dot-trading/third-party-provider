@@ -50,3 +50,22 @@ public record BinanceNotionalResponse(
     [property: JsonPropertyName("minNotional")] double? MinNotional,
     [property: JsonPropertyName("notional")] double? Notional
 );
+
+/// <summary>
+/// Represents a single K-Line (candlestick) data point returned from the V1 Binance klines endpoint.
+/// Corresponds to <c>GET /api/v{version}/Binance/klines/{symbol}</c>.
+/// </summary>
+/// <param name="OpenTime">Opening time of the candlestick (Unix epoch in milliseconds).</param>
+/// <param name="Open">Opening price.</param>
+/// <param name="High">Highest price during the interval.</param>
+/// <param name="Low">Lowest price during the interval.</param>
+/// <param name="Close">Closing price.</param>
+/// <param name="Volume">Trading volume in base asset.</param>
+public record BinanceKLineResponse(
+    [property: JsonPropertyName("openTime")] long OpenTime,
+    [property: JsonPropertyName("open")] double Open,
+    [property: JsonPropertyName("high")] double High,
+    [property: JsonPropertyName("low")] double Low,
+    [property: JsonPropertyName("close")] double Close,
+    [property: JsonPropertyName("volume")] double Volume
+);
