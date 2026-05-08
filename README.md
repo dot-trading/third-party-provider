@@ -13,6 +13,7 @@ The **Third-Party Provider** is a high-performance ASP.NET Core gateway designed
 | Document | Description |
 | :------- | :---------- |
 | [🔄 Caching](docs/caching.md) | Caching architecture, providers, configuration, keys, and durations |
+| [📦 Client Library](docs/client-library.md) | NuGet client SDK — typed services & DTOs for consuming the API (V1+) |
 
 ---
 

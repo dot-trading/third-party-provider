@@ -30,6 +30,38 @@ jobs:
       - name: Build
         run: dotnet build ${{ env.SOLUTION_FILE }} --no-restore -c Release
 
+      - name: Pack Client library
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: dotnet pack src/TradingProject.ThirdParty.Client/TradingProject.ThirdParty.Client.csproj -c Release --no-build -o ./nupkg
+
+      - name: Upload NuGet package artifact
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: ./nupkg/*.nupkg
+
+  nuget-publish:
+    name: Publish to NuGet.org
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Download NuGet package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nupkg
+          path: ./nupkg
+
+      - name: Push to NuGet.org
+        run: |
+          dotnet nuget push ./nupkg/*.nupkg \
+            --api-key ${{ secrets.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+        shell: bash
+
   docker:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
