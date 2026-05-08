@@ -10,7 +10,7 @@ using TradingProject.ThirdParty.Application.Features.MarketData.Queries.GetCoinG
 using TradingProject.ThirdParty.Application.Features.MarketData.Queries.GetGlobalMarketData;
 using TradingProject.ThirdParty.Application.Features.MarketData.Queries.GetTrendingCoins;
 
-namespace TradingProject.ThirdParty.Api.Controllers;
+namespace TradingProject.ThirdParty.Api.Controllers.V0;
 
 [ApiController]
 [ApiVersion("0.0")]

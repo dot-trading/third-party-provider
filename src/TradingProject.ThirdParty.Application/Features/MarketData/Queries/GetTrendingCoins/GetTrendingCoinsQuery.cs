@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using TradingProject.ThirdParty.Application.Abstractions;
+using TradingProject.ThirdParty.Domain.Constants;
 using TradingProject.ThirdParty.Domain.Models.Market;
 
 namespace TradingProject.ThirdParty.Application.Features.MarketData.Queries.GetTrendingCoins;
@@ -13,14 +14,11 @@ public class GetTrendingCoinsQueryHandler(
     ICacheService cache,
     ILogger<GetTrendingCoinsQueryHandler> logger) : IRequestHandler<GetTrendingCoinsQuery, TrendingCoin[]>
 {
-    private const string Key = "CoinGecko:Trending";
-
-    // Trending list changes slowly; 1-hour cache is sufficient and minimizes API calls.
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
-
     public async Task<TrendingCoin[]> Handle(GetTrendingCoinsQuery request, CancellationToken cancellationToken)
     {
-        var cached = await cache.GetAsync(Key, cancellationToken);
+        var key = CacheKeys.CoinGecko.TrendingKey;
+
+        var cached = await cache.GetAsync(key, cancellationToken);
         if (cached is not null)
         {
             logger.LogInformation("Returning cached trending coins");
@@ -31,7 +29,7 @@ public class GetTrendingCoinsQueryHandler(
         var coins = await coinGeckoService.GetTrendingCoinsAsync(cancellationToken);
 
         if (coins.Length > 0)
-            await cache.SetAsync(Key, JsonSerializer.Serialize(coins), CacheDuration, cancellationToken);
+            await cache.SetAsync(key, JsonSerializer.Serialize(coins), CacheKeys.CoinGecko.TrendingDuration, cancellationToken);
 
         return coins;
     }

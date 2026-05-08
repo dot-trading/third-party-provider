@@ -177,7 +177,7 @@ public class BinanceService : IBinanceService
         CancellationToken cancellationToken = default)
     {
         var stepSize = await GetLotStepSizeAsync(symbol, cancellationToken);
-        
+
         if (stepSize is null or <= 0)
         {
             throw new InvalidOperationException($"Cannot place order: LotStepSize missing or invalid for {symbol}");
@@ -190,12 +190,12 @@ public class BinanceService : IBinanceService
         var query = $"symbol={symbol}&side=SELL&type=MARKET&quantity={qty}&timestamp={timestamp}";
         return await PlaceOrderAsync(query, cancellationToken);
     }
-    
+
     public async Task<BinanceExchangeInfoDto?> GetExchangeInfoAsync(string symbol, CancellationToken cancellationToken)
     {
-        var cacheKey = $"binance:exchangeInfo:{symbol}";
+        var cacheKey = CacheKeys.Binance.ExchangeInfo(symbol);
         var cachedData = await _cacheService.GetAsync(cacheKey, cancellationToken);
-        
+
         if (cachedData is not null)
         {
             return JsonSerializer.Deserialize<BinanceExchangeInfoDto>(cachedData, _jsonOptions);
@@ -206,9 +206,8 @@ public class BinanceService : IBinanceService
         if (!response.IsSuccessStatusCode) return null;
 
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
-        
-        // Cache for 180 seconds as requested
-        await _cacheService.SetAsync(cacheKey, content, TimeSpan.FromSeconds(180), cancellationToken);
+
+        await _cacheService.SetAsync(cacheKey, content, CacheKeys.Binance.ExchangeInfoDuration, cancellationToken);
 
         return JsonSerializer.Deserialize<BinanceExchangeInfoDto>(content, _jsonOptions);
     }
@@ -241,7 +240,7 @@ public class BinanceService : IBinanceService
         return exchangeInfo?.MinNotional();
     }
 
-    
+
     private static string Sign(string data, string secret)
     {
         using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));

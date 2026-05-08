@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using TradingProject.ThirdParty.Application.Abstractions;
+using TradingProject.ThirdParty.Domain.Constants;
 using TradingProject.ThirdParty.Domain.Models.Market;
 
 namespace TradingProject.ThirdParty.Application.Features.Binance.Queries.GetKlines;
@@ -13,11 +14,9 @@ public class GetKlinesQueryHandler(
     ICacheService cache,
     ILogger<GetKlinesQueryHandler> logger) : IRequestHandler<GetKlinesQuery, List<Kline>>
 {
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
-
     public async Task<List<Kline>> Handle(GetKlinesQuery request, CancellationToken cancellationToken)
     {
-        var key = $"Binance:Klines:{request.Symbol}:{request.Interval}:{request.Limit}";
+        var key = CacheKeys.Binance.Klines(request.Symbol, request.Interval, request.Limit);
 
         var cached = await cache.GetAsync(key, cancellationToken);
         if (cached is not null)
@@ -31,7 +30,7 @@ public class GetKlinesQueryHandler(
 
         var klines = result.Select(k => new Kline(k.OpenTime, k.Open, k.High, k.Low, k.Close, k.Volume)).ToList();
 
-        await cache.SetAsync(key, JsonSerializer.Serialize(klines), CacheDuration, cancellationToken);
+        await cache.SetAsync(key, JsonSerializer.Serialize(klines), CacheKeys.Binance.KlinesDuration, cancellationToken);
 
         return klines;
     }

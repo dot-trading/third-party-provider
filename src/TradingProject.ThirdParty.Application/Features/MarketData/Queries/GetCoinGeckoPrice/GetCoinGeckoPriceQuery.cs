@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 using TradingProject.ThirdParty.Application.Abstractions;
+using TradingProject.ThirdParty.Domain.Constants;
 
 namespace TradingProject.ThirdParty.Application.Features.MarketData.Queries.GetCoinGeckoPrice;
 
@@ -12,11 +13,9 @@ public class GetCoinGeckoPriceQueryHandler(
     ICacheService cache,
     ILogger<GetCoinGeckoPriceQueryHandler> logger) : IRequestHandler<GetCoinGeckoPriceQuery, double>
 {
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
-
     public async Task<double> Handle(GetCoinGeckoPriceQuery request, CancellationToken cancellationToken)
     {
-        var key = $"CoinGecko:Price:{request.CoinId.ToLower()}:{request.VsCurrency.ToLower()}";
+        var key = CacheKeys.CoinGecko.Price(request.CoinId, request.VsCurrency);
 
         var cached = await cache.GetAsync(key, cancellationToken);
         if (cached is not null)
@@ -30,7 +29,7 @@ public class GetCoinGeckoPriceQueryHandler(
         var price = priceDto?.Price ?? 0;
 
         if (price > 0)
-            await cache.SetAsync(key, price.ToString(CultureInfo.InvariantCulture), CacheDuration, cancellationToken);
+            await cache.SetAsync(key, price.ToString(CultureInfo.InvariantCulture), CacheKeys.CoinGecko.PriceDuration, cancellationToken);
 
         return price;
     }

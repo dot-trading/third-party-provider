@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 using TradingProject.ThirdParty.Application.Abstractions;
+using TradingProject.ThirdParty.Domain.Constants;
 
 namespace TradingProject.ThirdParty.Application.Features.Binance.Queries.GetMinNotional;
 
@@ -12,12 +13,9 @@ public class GetMinNotionalQueryHandler(
     ICacheService cache,
     ILogger<GetMinNotionalQueryHandler> logger) : IRequestHandler<GetMinNotionalQuery, double>
 {
-    private const string KeyPrefix = "Binance:MinNotional:";
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
-
     public async Task<double> Handle(GetMinNotionalQuery request, CancellationToken cancellationToken)
     {
-        var key = $"{KeyPrefix}{request.Symbol}";
+        var key = CacheKeys.Binance.MinNotional(request.Symbol);
 
         var cached = await cache.GetAsync(key, cancellationToken);
         if (cached is not null)
@@ -31,7 +29,7 @@ public class GetMinNotionalQueryHandler(
         var minNotional = result ?? 0;
 
         if (minNotional > 0)
-            await cache.SetAsync(key, minNotional.ToString(CultureInfo.InvariantCulture), CacheDuration, cancellationToken);
+            await cache.SetAsync(key, minNotional.ToString(CultureInfo.InvariantCulture), CacheKeys.Binance.MinNotionalDuration, cancellationToken);
 
         return minNotional;
     }
