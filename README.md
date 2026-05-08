@@ -1,117 +1,97 @@
-# third-party-provider
+# 🌐 Third-Party Provider Gateway
 
-ASP.NET Core service that acts as a unified gateway to external market data APIs.
-All endpoints are cached in Redis to minimise upstream API calls and stay within free-tier rate limits.
+![.NET](https://img.shields.io/badge/.NET-10.0-512bd4?style=for-the-badge&logo=dotnet)
+![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
-## Architecture
+The **Third-Party Provider** is a high-performance ASP.NET Core gateway designed to act as a unified bridge between your trading infrastructure and external market data providers. It simplifies integration by providing a consistent API while handling rate-limiting, caching, and resilience.
 
-```
+---
+
+## ✨ Key Features
+
+*   **Unified API**: Access Binance, CoinGecko, and Sentiment data through a single, clean interface.
+*   **Smart Caching**: Integrated **Redis** caching to minimize upstream calls, stay within free-tier limits, and reduce latency.
+*   **Resilient HTTP**: Built with **Polly** resilience policies (Retry, Circuit Breaker) to handle transient network failures.
+*   **News Aggregator**: Advanced RSS engine that fetches and filters news from CryptoPanic and major news outlets.
+*   **Strict Validation**: Fail-fast configuration validation to ensure system integrity on startup.
+
+---
+
+## 🏗 Architecture
+
+The service follows **Clean Architecture** principles with a MediatR-based CQRS pattern:
+
+```text
 Api (Controllers)
-  └── Application (MediatR CQRS — Queries / Commands)
-        ├── Abstractions (interfaces)
+  └── Application (CQRS — Queries & Commands)
+        ├── Abstractions (Interfaces)
         └── Features/
-              ├── Binance/         — price, klines, ticker, balances, orders
-              ├── MarketData/      — CoinGecko price, global market data, trending
-              ├── Sentiment/       — Fear & Greed Index (AlternativeMe)
-              └── News/            — CryptoPanic news feed
-Infrastructure (service implementations, HTTP clients, Redis cache)
+              ├── Binance/     → Price, Klines, Ticker, Balances, Orders
+              ├── MarketData/  → CoinGecko & Global Market Metrics
+              ├── Sentiment/   → Fear & Greed Index
+              └── News/        → Multi-source RSS Aggregation
+Infrastructure (HTTP Clients, Resilience, Redis Cache)
 ```
 
-## Endpoints
+---
 
-### Binance — `api/market-data`
+## 🚀 Getting Started
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/market-data/price/{symbol}` | Current price from Binance |
-| GET | `/api/market-data/notional/{symbol}` | Minimum notional value for a symbol |
-| GET | `/api/market-data/klines/{symbol}?interval=1h&limit=24` | OHLCV klines |
-| GET | `/api/market-data/ticker/{symbol}` | 24h ticker stats |
+### 1. Prerequisites
+*   .NET 10 SDK
+*   Redis Instance
 
-### Binance — `api/account`
+### 2. Configuration
+The service is configured via `appsettings.json` or Environment Variables.
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/account/balances` | Wallet balances |
+| Section | Key | Description |
+| :--- | :--- | :--- |
+| **Binance** | `ApiKey` | Your Binance API Key |
+| **Binance** | `ApiSecret` | Your Binance API Secret |
+| **CoinGecko** | `ApiKey` | (Optional) Demo API Key to increase limits |
+| **Redis** | `Host` | Redis server hostname |
+| **RssNews** | `FeedUrls` | List of RSS feeds to monitor |
 
-### Binance — `api/trading`
+---
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/api/trading/order` | Place a raw signed order |
-| POST | `/api/trading/buy` | Place a market buy order |
-| POST | `/api/trading/sell` | Place a market sell order |
+## 📡 API Reference
 
-### CoinGecko — `api/market-data`
+### 📊 Market Data (Binance)
+| Endpoint | Description |
+| :--- | :--- |
+| `GET /api/market-data/price/{symbol}` | Get the current ticker price. |
+| `GET /api/market-data/klines/{symbol}` | Fetch OHLCV candles (default 1h). |
+| `GET /api/market-data/ticker/{symbol}` | 24h price change statistics. |
 
-| Method | Path | Cache | Description |
-|--------|------|-------|-------------|
-| GET | `/api/market-data/price/coingecko/{coinId}?vsCurrency=usd` | 5 min | Coin price |
-| GET | `/api/market-data/global` | 5 min | BTC/ETH dominance, total market cap, 24h change |
-| GET | `/api/market-data/trending` | 1 hour | Top 7 trending coins by search volume |
+### 📈 Global Insights
+| Endpoint | Source | Cache |
+| :--- | :--- | :--- |
+| `GET /api/market-data/global` | CoinGecko | 5m |
+| `GET /api/market-data/sentiment/fear-and-greed` | AlternativeMe | 1h |
+| `GET /api/news` | RSS Engine | 15m |
 
-### Sentiment — `api/market-data`
+### 💰 Trading & Account
+| Endpoint | Description |
+| :--- | :--- |
+| `GET /api/account/balances` | Retrieve current wallet balances. |
+| `POST /api/trading/buy` | Execute a Market Buy order. |
+| `POST /api/trading/sell` | Execute a Market Sell order. |
 
-| Method | Path | Cache | Description |
-|--------|------|-------|-------------|
-| GET | `/api/market-data/sentiment/fear-and-greed` | 1 hour | Fear & Greed Index with classification |
+---
 
-### News — `api/news`
+## 🤝 Contributing & Support
 
-| Method | Path | Cache | Description |
-|--------|------|-------|-------------|
-| GET | `/api/news?currencies=BTC,ETH&limit=10` | 15 min | Latest crypto news aggregated from public RSS feeds |
+If this project helps you in your trading journey, feel free to contribute or give it a ⭐!
 
-**News query parameters:**
-- `currencies` — comma-separated symbols to filter by title match (e.g., `BTC,ETH`). Omit for all news.
-- `limit` — max articles to return (default: `10`).
+### 💎 Donations
+Community support helps keep the development active and covers API subscription costs.
 
-## Configuration
+*   **BTC**: `1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa`
+*   **ETH (ERC20)**: `0x742d35Cc6634C0532925a3b844Bc454e4438f44e`
+*   **USDT (TRC20)**: `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t`
 
-| Section | Key | Description | Default |
-|---------|-----|-------------|---------|
-| `Binance` | `BaseUrl` | Binance REST API base URL | — |
-| `Binance` | `ApiKey` | Binance API key | — |
-| `Binance` | `ApiSecret` | Binance API secret | — |
-| `CoinGecko` | `ApiKey` | CoinGecko demo API key (optional, increases rate limit) | — |
-| `RssNews` | `FeedUrls` | JSON array of RSS feed URLs to aggregate | CoinDesk + CoinTelegraph |
-| `Redis` | `ConnectionString` | Redis connection string | — |
+---
 
-### RSS news feeds
-
-News is aggregated from public RSS 2.0 feeds — no API key required.
-
-**Two-layer aggregation strategy:**
-
-1. **CryptoPanic per-coin feeds** (dynamic, symbol-driven) — when currencies are specified,
-   the service automatically fetches `https://cryptopanic.com/news/{slug}/rss/` for each known
-   symbol. Articles are pre-filtered at source, so no client-side title matching is needed.
-   Supported symbols: BTC, ETH, BNB, SOL, XRP, ADA, AVAX, DOT, NEAR, MATIC, LINK, UNI,
-   AAVE, CRV, OP, ARB, DOGE, SHIB, PEPE, FLOKI, WLD, LTC, BCH, TON, SUI, APT.
-
-2. **Configured general feeds** (static, always fetched) — default: CoinDesk and CoinTelegraph.
-   When currencies are specified, articles are filtered by symbol presence in the title.
-   Override or extend via `RssNews:FeedUrls` in `appsettings.json`:
-
-```json
-"RssNews": {
-  "FeedUrls": [
-    "https://www.coindesk.com/arc/outboundfeeds/rss/",
-    "https://cointelegraph.com/rss",
-    "https://decrypt.co/feed"
-  ]
-}
-```
-
-Results from both layers are deduplicated by URL, sorted by date descending, then truncated to `limit`.
-Individual feed failures are silenced — the remaining feeds still contribute results.
-
-## External APIs
-
-| Service | Endpoint | Rate limit | Docs |
-|---------|----------|------------|------|
-| Binance | `api.binance.com` | ~1200 req/min (weight-based) | [Binance API](https://binance-docs.github.io/apidocs/spot/en/) |
-| CoinGecko | `api.coingecko.com/api/v3` | ~30 req/min (demo key) | [CoinGecko API](https://docs.coingecko.com/reference/introduction) |
-| AlternativeMe | `api.alternative.me` | No documented limit | [Alternative.me](https://alternative.me/crypto/fear-and-greed-index/) |
-| CoinDesk RSS | `coindesk.com/arc/outboundfeeds/rss/` | No limit | Public RSS |
-| CoinTelegraph RSS | `cointelegraph.com/rss` | No limit | Public RSS |
+## 📄 License
+This project is licensed under the MIT License.
