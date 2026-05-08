@@ -6,6 +6,7 @@
     <Project Path="src/TradingProject.ThirdParty.Infrastructure/TradingProject.ThirdParty.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/TradingProject.ThirdParty.Api.Tests/TradingProject.ThirdParty.Api.Tests.csproj" />
     <Project Path="tests/TradingProject.ThirdParty.Application.Tests/TradingProject.ThirdParty.Application.Tests.csproj" />
   </Folder>
 </Solution>
