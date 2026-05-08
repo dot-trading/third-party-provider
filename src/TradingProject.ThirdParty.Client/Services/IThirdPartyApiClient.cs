@@ -48,4 +48,13 @@ public interface IThirdPartyApiClient
         string interval = "1h",
         int limit = 24,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves 24-hour ticker statistics for a trading pair.
+    /// Corresponds to <c>GET /api/v1/Binance/ticker/{symbol}</c>.
+    /// </summary>
+    /// <param name="symbol">Trading pair symbol (e.g. "BTCUSDT").</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The ticker response, or <c>null</c> if the symbol is not found.</returns>
+    Task<BinanceTicker24HResponse?> GetTicker24hAsync(string symbol, CancellationToken cancellationToken = default);
 }

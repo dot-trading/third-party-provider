@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using TradingProject.ThirdParty.Application.Abstractions;
 using TradingProject.ThirdParty.Application.Common.Models;
+using TradingProject.ThirdParty.Domain.Models.Market;
 using Xunit;
 
 namespace TradingProject.ThirdParty.Api.Tests.Integration;
@@ -255,5 +256,55 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
         result.Should().HaveCount(1);
         result![0].OpenTime.Should().Be(1715112000000);
         result[0].Close.Should().Be(50500.0);
+    }
+
+    [Fact]
+    public async Task GetTicker24h_V0_ShouldReturnFullDto()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var symbol = "BTCUSDT";
+        var tickerDto = new BinanceTicker24HDto(symbol, 50000.0, 5.0, 1000.0, 51000.0, 49000.0);
+
+        _binanceServiceMock.Setup(s => s.GetTicker24HAsync(symbol, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(tickerDto);
+        
+        _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var response = await client.GetAsync($"/api/v0.0/Binance/ticker/{symbol}");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<Ticker24h>();
+        result.Should().NotBeNull();
+        result!.Symbol.Should().Be(symbol);
+        result.Price.Should().Be(50000.0);
+    }
+
+    [Fact]
+    public async Task GetTicker24h_V1_ShouldReturnFullDto()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var symbol = "BTCUSDT";
+        var tickerDto = new BinanceTicker24HDto(symbol, 50000.0, 5.0, 1000.0, 51000.0, 49000.0);
+
+        _binanceServiceMock.Setup(s => s.GetTicker24HAsync(symbol, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(tickerDto);
+        
+        _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var response = await client.GetAsync($"/api/v1.0/Binance/ticker/{symbol}");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<Ticker24h>();
+        result.Should().NotBeNull();
+        result!.Symbol.Should().Be(symbol);
+        result.Price.Should().Be(50000.0);
     }
 }

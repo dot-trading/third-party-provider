@@ -694,4 +694,176 @@ public class ThirdPartyApiClientTests
         result[1].Close.Should().Be(51000.0);
         result[1].Volume.Should().Be(200.0);
     }
+
+    [Fact]
+    public async Task GetTicker24hAsync_WhenApiReturnsValidResponse_ShouldReturnDeserializedResult()
+    {
+        // Arrange
+        const string symbol = "BTCUSDT";
+        var expected = new BinanceTicker24HResponse(
+            Symbol: symbol,
+            Price: 50000.0,
+            PriceChangePercent: -2.5,
+            QuoteVolume: 1234567.89,
+            HighPrice: 51000.0,
+            LowPrice: 49000.0
+        );
+
+        var json = JsonSerializer.Serialize(expected);
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(r =>
+                    r.Method == HttpMethod.Get &&
+                    r.RequestUri!.PathAndQuery == $"/api/v1/Binance/ticker/{symbol}"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(json)
+            });
+
+        // Act
+        var result = await _client.GetTicker24hAsync(symbol, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Symbol.Should().Be(symbol);
+        result.Price.Should().Be(50000.0);
+        result.PriceChangePercent.Should().Be(-2.5);
+        result.QuoteVolume.Should().Be(1234567.89);
+        result.HighPrice.Should().Be(51000.0);
+        result.LowPrice.Should().Be(49000.0);
+
+        _handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Once(),
+            ItExpr.Is<HttpRequestMessage>(r =>
+                r.Method == HttpMethod.Get &&
+                r.RequestUri!.PathAndQuery == $"/api/v1/Binance/ticker/{symbol}"),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetTicker24hAsync_WhenSymbolIsNull_ShouldThrowArgumentNullException()
+    {
+        // Act
+        var act = () => _client.GetTicker24hAsync(null!, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task GetTicker24hAsync_WhenApiReturnsNotFound_ShouldReturnNull()
+    {
+        // Arrange
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NotFound
+            });
+
+        // Act
+        var result = await _client.GetTicker24hAsync("UNKNOWN", CancellationToken.None);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetTicker24hAsync_WhenApiReturnsError_ShouldThrowHttpRequestException()
+    {
+        // Arrange
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+        // Act
+        var act = () => _client.GetTicker24hAsync("BTCUSDT", CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<HttpRequestException>();
+    }
+
+    [Fact]
+    public async Task GetTicker24hAsync_WhenCancelled_ShouldThrowTaskCanceledException()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK
+            });
+
+        // Act
+        var act = () => _client.GetTicker24hAsync("BTCUSDT", cts.Token);
+
+        // Assert
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Fact]
+    public async Task GetTicker24hAsync_ResponseMatchesV1ApiContract_ShouldDeserializeSuccessfully()
+    {
+        // Arrange — this JSON mirrors what the actual V1 API returns
+        const string v1ApiJson = """
+        {
+            "symbol": "BTCUSDT",
+            "price": 50000.0,
+            "priceChangePercent": -2.5,
+            "quoteVolume": 1234567.89,
+            "highPrice": 51000.0,
+            "lowPrice": 49000.0
+        }
+        """;
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(r =>
+                    r.Method == HttpMethod.Get &&
+                    r.RequestUri!.PathAndQuery == "/api/v1/Binance/ticker/BTCUSDT"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(v1ApiJson)
+            });
+
+        // Act
+        var result = await _client.GetTicker24hAsync("BTCUSDT", CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Symbol.Should().Be("BTCUSDT");
+        result.Price.Should().Be(50000.0);
+        result.PriceChangePercent.Should().Be(-2.5);
+        result.QuoteVolume.Should().Be(1234567.89);
+        result.HighPrice.Should().Be(51000.0);
+        result.LowPrice.Should().Be(49000.0);
+    }
 }
