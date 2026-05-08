@@ -9,7 +9,7 @@ using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetPrice;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetTicker24h;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetMinNotional;
 
-namespace TradingProject.ThirdParty.Api.Controllers;
+namespace TradingProject.ThirdParty.Api.Controllers.V0;
 
 [Obsolete("This controller is deprecated. Please use the specialized providers controllers instead.")]
 [ApiController]

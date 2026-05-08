@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 using TradingProject.ThirdParty.Application.Abstractions;
+using TradingProject.ThirdParty.Domain.Constants;
 
 namespace TradingProject.ThirdParty.Application.Features.Binance.Queries.GetPrice;
 
@@ -12,11 +13,9 @@ public class GetPriceQueryHandler(
     ICacheService cache,
     ILogger<GetPriceQueryHandler> logger) : IRequestHandler<GetPriceQuery, double>
 {
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(30);
-
     public async Task<double> Handle(GetPriceQuery request, CancellationToken cancellationToken)
     {
-        var key = $"Binance:Price:{request.Symbol}";
+        var key = CacheKeys.Binance.Price(request.Symbol);
 
         var cached = await cache.GetAsync(key, cancellationToken);
         if (cached is not null)
@@ -29,7 +28,7 @@ public class GetPriceQueryHandler(
         var priceDto = await binanceService.GetCurrentPriceAsync(request.Symbol, cancellationToken);
         var price = priceDto?.Price ?? 0;
 
-        await cache.SetAsync(key, price.ToString(CultureInfo.InvariantCulture), CacheDuration, cancellationToken);
+        await cache.SetAsync(key, price.ToString(CultureInfo.InvariantCulture), CacheKeys.Binance.PriceDuration, cancellationToken);
 
         return price;
     }

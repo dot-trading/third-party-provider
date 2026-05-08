@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using TradingProject.ThirdParty.Application.Abstractions;
+using TradingProject.ThirdParty.Domain.Constants;
 using TradingProject.ThirdParty.Domain.Models.Market;
 
 namespace TradingProject.ThirdParty.Application.Features.Sentiment.Queries.GetFearAndGreed;
@@ -13,12 +14,11 @@ public class GetFearAndGreedQueryHandler(
     ICacheService cache,
     ILogger<GetFearAndGreedQueryHandler> logger) : IRequestHandler<GetFearAndGreedQuery, FearAndGreedIndex>
 {
-    private const string Key = "Sentiment:FearAndGreed";
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
-
     public async Task<FearAndGreedIndex> Handle(GetFearAndGreedQuery request, CancellationToken cancellationToken)
     {
-        var cached = await cache.GetAsync(Key, cancellationToken);
+        var key = CacheKeys.Sentiment.FearAndGreedKey;
+
+        var cached = await cache.GetAsync(key, cancellationToken);
         if (cached is not null)
         {
             logger.LogInformation("Returning cached Fear & Greed Index");
@@ -28,7 +28,7 @@ public class GetFearAndGreedQueryHandler(
         logger.LogInformation("Fetching Fear & Greed Index from service");
         var index = await sentimentService.GetFearAndGreedIndexAsync(cancellationToken);
 
-        await cache.SetAsync(Key, JsonSerializer.Serialize(index), CacheDuration, cancellationToken);
+        await cache.SetAsync(key, JsonSerializer.Serialize(index), CacheKeys.Sentiment.FearAndGreedDuration, cancellationToken);
 
         return index;
     }

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Asp.Versioning;
 using TradingProject.ThirdParty.Application.Features.News.Queries.GetNews;
 
-namespace TradingProject.ThirdParty.Api.Controllers;
+namespace TradingProject.ThirdParty.Api.Controllers.V0;
 
 [ApiController]
 [ApiVersion("0.0")]

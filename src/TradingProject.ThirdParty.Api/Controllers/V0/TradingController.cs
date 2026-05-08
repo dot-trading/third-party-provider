@@ -4,7 +4,7 @@ using Asp.Versioning;
 using TradingProject.ThirdParty.Application.Features.Binance.Commands.PlaceMarketBuy;
 using TradingProject.ThirdParty.Application.Features.Binance.Commands.PlaceMarketSell;
 
-namespace TradingProject.ThirdParty.Api.Controllers;
+namespace TradingProject.ThirdParty.Api.Controllers.V0;
 
 [ApiController]
 [ApiVersion("0.0")]
