@@ -39,7 +39,7 @@ public class BinanceController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> GetMinNotional(string symbol, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetMinNotionalQuery(symbol), cancellationToken);
-        return Ok(result);
+        return Ok(result?.NotionalValue ?? 0);
     }
 
     [HttpGet("klines/{symbol}")]

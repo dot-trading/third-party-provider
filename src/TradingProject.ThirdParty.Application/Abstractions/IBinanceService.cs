@@ -35,7 +35,7 @@ public interface IBinanceService
         double quantity,
         CancellationToken cancellationToken = default);
     
-    Task<double?> GetMinNotionalAsync(
+    Task<BinanceFilterDto?> GetMinNotionalAsync(
         string symbol,
         CancellationToken cancellationToken = default);
 
@@ -43,7 +43,7 @@ public interface IBinanceService
         string symbol,
         CancellationToken cancellationToken);
 
-    Task<double?> GetLotStepSizeAsync(
+    Task<BinanceFilterDto?> GetLotStepSizeAsync(
         string symbol,
         CancellationToken cancellationToken = default);
 }

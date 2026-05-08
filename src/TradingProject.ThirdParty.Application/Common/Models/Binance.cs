@@ -105,13 +105,6 @@ public record BinanceSymbolDto(List<BinanceFilterDto> Filters);
 
 public record BinanceFilterDto(string FilterType, double? StepSize, double? MinNotional, double? Notional)
 {
-    public double NotionalValue => MinNotional ?? Notional ?? 0;
-    public double StepSizeValue => StepSize ?? 0;
-
-    public static implicit operator double?(BinanceFilterDto? dto) => dto?.FilterType switch
-    {
-        "LOT_SIZE" => dto.StepSizeValue,
-        "NOTIONAL" or "MIN_NOTIONAL" => dto.NotionalValue,
-        _ => 0
-    };
+    public double? NotionalValue => MinNotional ?? Notional;
+    public double? StepSizeValue => StepSize;
 };
