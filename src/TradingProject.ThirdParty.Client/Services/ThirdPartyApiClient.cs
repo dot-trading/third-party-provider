@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
@@ -130,6 +131,38 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
         catch (HttpRequestException ex)
         {
             _logger.LogError(ex, "Failed to fetch klines for symbol {Symbol} from ThirdParty API", symbol);
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<BinanceTicker24HResponse?> GetTicker24hAsync(string symbol, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(symbol);
+
+        try
+        {
+            _logger.LogDebug("Fetching 24h ticker for symbol {Symbol} from ThirdParty API (V1)", symbol);
+
+            var response = await _httpClient.GetAsync($"api/v1/Binance/ticker/{symbol}", cancellationToken);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                _logger.LogDebug("24h ticker not found for symbol {Symbol}", symbol);
+                return null;
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<BinanceTicker24HResponse>(JsonOptions, cancellationToken);
+
+            _logger.LogDebug("Successfully retrieved 24h ticker for symbol {Symbol}: price={Price}", symbol, result?.Price);
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to fetch 24h ticker for symbol {Symbol} from ThirdParty API", symbol);
             throw;
         }
     }

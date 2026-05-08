@@ -69,3 +69,22 @@ public record BinanceKLineResponse(
     [property: JsonPropertyName("close")] double Close,
     [property: JsonPropertyName("volume")] double Volume
 );
+
+/// <summary>
+/// Response returned by <c>GET /api/v{version}/Binance/ticker/{symbol}</c> (V1+).
+/// Contains 24-hour ticker statistics for a trading pair.
+/// </summary>
+/// <param name="Symbol">Trading pair symbol (e.g. "BTCUSDT").</param>
+/// <param name="Price">Last traded price.</param>
+/// <param name="PriceChangePercent">Price change percentage over the last 24 hours.</param>
+/// <param name="QuoteVolume">Total trading volume in quote asset.</param>
+/// <param name="HighPrice">Highest price in the last 24 hours.</param>
+/// <param name="LowPrice">Lowest price in the last 24 hours.</param>
+public record BinanceTicker24HResponse(
+    [property: JsonPropertyName("symbol")] string Symbol,
+    [property: JsonPropertyName("price")] double Price,
+    [property: JsonPropertyName("priceChangePercent")] double PriceChangePercent,
+    [property: JsonPropertyName("quoteVolume")] double QuoteVolume,
+    [property: JsonPropertyName("highPrice")] double HighPrice,
+    [property: JsonPropertyName("lowPrice")] double LowPrice
+);

@@ -8,6 +8,8 @@ using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetBalances
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetPrice;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetMinNotional;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetKlines;
+using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetTicker24h;
+using TradingProject.ThirdParty.Domain.Models.Market;
 using Xunit;
 
 namespace TradingProject.ThirdParty.Api.Tests.Controllers.V1;
@@ -112,5 +114,25 @@ public class BinanceControllerTests
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         okResult.Value.Should().BeEquivalentTo(expectedDto);
         _mediatorMock.Verify(m => m.Send(It.IsAny<GetKlinesQuery>(), cancellationToken), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetTicker24HAsync_ShouldReturnOkWithFullDto()
+    {
+        // Arrange
+        var symbol = "BTCUSDT";
+        var cancellationToken = CancellationToken.None;
+        var expectedDto = new Ticker24h(symbol, 50000.0, 5.0, 1000.0, 51000.0, 49000.0);
+
+        _mediatorMock.Setup(m => m.Send(It.IsAny<GetTicker24hQuery>(), cancellationToken))
+            .ReturnsAsync(expectedDto);
+
+        // Act
+        var result = await _controller.GetTicker24HAsync(symbol, cancellationToken);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().BeEquivalentTo(expectedDto);
+        _mediatorMock.Verify(m => m.Send(It.Is<GetTicker24hQuery>(q => q.Symbol == symbol), cancellationToken), Times.Once);
     }
 }
