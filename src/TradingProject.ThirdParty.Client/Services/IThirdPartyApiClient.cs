@@ -17,6 +17,15 @@ public interface IThirdPartyApiClient
     Task<ListBinanceBalanceResponse?> GetBalancesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Retrieves balances for the base and quote assets of a specific trading pair.
+    /// Corresponds to <c>GET /api/v1/Binance/balances/{symbol}</c>.
+    /// </summary>
+    /// <param name="symbol">Trading pair symbol (e.g. "BTCUSDT").</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The filtered balance response, or <c>null</c> if the symbol is not found.</returns>
+    Task<ListBinanceBalanceResponse?> GetBalancesAsync(string symbol, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets the current ticker price for a trading pair.
     /// Corresponds to <c>GET /api/v1/Binance/price/{symbol}</c>.
     /// </summary>

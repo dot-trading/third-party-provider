@@ -16,6 +16,7 @@ public class NewsController(IMediator mediator) : ControllerBase
     /// </summary>
     /// <param name="currencies">Comma-separated currency symbols to filter by (e.g., BTC,ETH). Omit for general market news.</param>
     /// <param name="limit">Maximum number of articles to return (default: 10).</param>
+    /// <param name="cancellationToken"></param>
     [HttpGet]
     public async Task<IActionResult> GetNews(
         [FromQuery] string? currencies,

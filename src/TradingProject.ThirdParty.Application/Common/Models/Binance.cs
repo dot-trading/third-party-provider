@@ -96,12 +96,12 @@ public class BinanceExchangeInfoDto
 
     public BinanceFilterDto? LotStepSize() => Symbols.FirstOrDefault()?.Filters
         .FirstOrDefault(f => f.FilterType is "LOT_SIZE");
-    
+
     public BinanceFilterDto? MinNotional() => Symbols.FirstOrDefault()?.Filters
         .FirstOrDefault(f => f.FilterType is "NOTIONAL" or "MIN_NOTIONAL");
 };
 
-public record BinanceSymbolDto(List<BinanceFilterDto> Filters);
+public record BinanceSymbolDto(string BaseAsset, string QuoteAsset, List<BinanceFilterDto> Filters);
 
 public record BinanceFilterDto(string FilterType, double? StepSize, double? MinNotional, double? Notional)
 {

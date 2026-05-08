@@ -54,6 +54,53 @@ public class BinanceControllerTests
     }
 
     [Fact]
+    public async Task GetBalancesBySymbol_WhenFound_ShouldReturnOkWithFullDto()
+    {
+        // Arrange
+        var symbol = "BTCUSDT";
+        var cancellationToken = CancellationToken.None;
+        var expectedDto = new ListBinanceBalanceDto(
+            new[]
+            {
+                new BinanceBalanceDto("BTC", 1.0, 0.0),
+                new BinanceBalanceDto("USDT", 50000.0, 0.0)
+            },
+            0,
+            0,
+            []
+        );
+
+        _mediatorMock.Setup(m => m.Send(It.IsAny<GetBalancesBySymbolQuery>(), cancellationToken))
+            .ReturnsAsync(expectedDto);
+
+        // Act
+        var result = await _controller.GetBalancesAsync(symbol, cancellationToken);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().BeEquivalentTo(expectedDto);
+        _mediatorMock.Verify(m => m.Send(It.Is<GetBalancesBySymbolQuery>(q => q.Symbol == symbol), cancellationToken), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetBalancesBySymbol_WhenNotFound_ShouldReturnNotFound()
+    {
+        // Arrange
+        var symbol = "UNKNOWN";
+        var cancellationToken = CancellationToken.None;
+
+        _mediatorMock.Setup(m => m.Send(It.IsAny<GetBalancesBySymbolQuery>(), cancellationToken))
+            .ReturnsAsync((ListBinanceBalanceDto?)null);
+
+        // Act
+        var result = await _controller.GetBalancesAsync(symbol, cancellationToken);
+
+        // Assert
+        result.Should().BeOfType<NotFoundResult>();
+        _mediatorMock.Verify(m => m.Send(It.Is<GetBalancesBySymbolQuery>(q => q.Symbol == symbol), cancellationToken), Times.Once);
+    }
+
+    [Fact]
     public async Task GetPrice_ShouldReturnOkWithFullDto()
     {
         // Arrange
