@@ -4,9 +4,11 @@
     <Project Path="src/TradingProject.ThirdParty.Application/TradingProject.ThirdParty.Application.csproj" />
     <Project Path="src/TradingProject.ThirdParty.Domain/TradingProject.ThirdParty.Domain.csproj" />
     <Project Path="src/TradingProject.ThirdParty.Infrastructure/TradingProject.ThirdParty.Infrastructure.csproj" />
+    <Project Path="src/TradingProject.ThirdParty.Client/TradingProject.ThirdParty.Client.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/TradingProject.ThirdParty.Api.Tests/TradingProject.ThirdParty.Api.Tests.csproj" />
     <Project Path="tests/TradingProject.ThirdParty.Application.Tests/TradingProject.ThirdParty.Application.Tests.csproj" />
+    <Project Path="tests/TradingProject.ThirdParty.Client.Tests/TradingProject.ThirdParty.Client.Tests.csproj" />
   </Folder>
 </Solution>
