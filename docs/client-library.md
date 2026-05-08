@@ -81,12 +81,11 @@ public class MyService(IThirdPartyApiClient client)
 | Client Method               | API Endpoint                       | Version |
 | :-------------------------- | :--------------------------------- | :------ |
 | `GetBalancesAsync()`        | `GET /api/v1/Binance/balances`     | V1      |
+| `GetPriceAsync(symbol)`     | `GET /api/v1/Binance/price/{symbol}`| V1      |
 
 ### 🔜 Coming Soon (V1+)
 
 | Client Method                  | API Endpoint                          |
-| :----------------------------- | :------------------------------------ |
-| `GetPriceAsync(symbol)`        | `GET /api/v1/Binance/price/{symbol}`  |
 | `GetKlinesAsync(symbol, ...)`  | `GET /api/v1/Binance/klines/{symbol}` |
 | `GetTicker24hAsync(symbol)`    | `GET /api/v1/Binance/ticker/{symbol}` |
 | `GetMinNotionalAsync(symbol)`  | `GET /api/v1/Binance/notional/{symbol}` |

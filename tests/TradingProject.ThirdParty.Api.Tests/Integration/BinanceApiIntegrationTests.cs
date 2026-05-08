@@ -9,13 +9,13 @@ using Xunit;
 
 namespace TradingProject.ThirdParty.Api.Tests.Integration;
 
-public class BinanceBalancesIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly WebApplicationFactory<Program> _factory;
     private readonly Mock<IBinanceService> _binanceServiceMock = new();
     private readonly Mock<ICacheService> _cacheServiceMock = new();
 
-    public BinanceBalancesIntegrationTests(WebApplicationFactory<Program> factory)
+    public BinanceApiIntegrationTests(WebApplicationFactory<Program> factory)
     {
         _factory = factory.WithWebHostBuilder(builder =>
         {
@@ -102,5 +102,52 @@ public class BinanceBalancesIntegrationTests : IClassFixture<WebApplicationFacto
         result.Balances[0].Asset.Should().Be("BTC");
         result.Balances[0].Free.Should().Be(1.5);
         result.Balances[0].Locked.Should().Be(0.5);
+    }
+
+    [Fact]
+    public async Task GetPrice_V0_ShouldReturnDouble()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var symbol = "BTCUSDT";
+        var priceDto = new BinancePriceDto(50000.0);
+
+        _binanceServiceMock.Setup(s => s.GetCurrentPriceAsync(symbol, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(priceDto);
+        
+        _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var response = await client.GetAsync($"/api/v0.0/Binance/price/{symbol}");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var price = await response.Content.ReadFromJsonAsync<double>();
+        price.Should().Be(50000.0);
+    }
+
+    [Fact]
+    public async Task GetPrice_V1_ShouldReturnFullDto()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var symbol = "BTCUSDT";
+        var priceDto = new BinancePriceDto(50000.0);
+
+        _binanceServiceMock.Setup(s => s.GetCurrentPriceAsync(symbol, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(priceDto);
+        
+        _cacheServiceMock.Setup(s => s.GetAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string?)null);
+
+        // Act
+        var response = await client.GetAsync($"/api/v1.0/Binance/price/{symbol}");
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<BinancePriceDto>();
+        result.Should().NotBeNull();
+        result!.Price.Should().Be(50000.0);
     }
 }

@@ -150,14 +150,13 @@ public class BinanceService : IBinanceService
         // Example: spent 999.87 USDT to receive 0.02 BTC → avgPrice = 999.87 / 0.02 = 49 993.5 USDT/BTC.
         // Guard against division by zero in case the order was not filled at all.
         //
-        // Note on CumulativeQuoteQty vs CummulativeQuoteQty:
-        // Binance shipped the original field with a typo ("cummulative", double-m) and cannot remove
-        // it without breaking existing integrations. "cumulativeQuoteQty" (single-m) was added later
-        // as a correctly-spelled alias — both fields carry the same value.
-        var avgPrice =
-            binanceOrderDto.ExecutedQty > 0 ?
-                binanceOrderDto.CumulativeQuoteQty / binanceOrderDto.ExecutedQty
-                : 0;
+        // Binance always returns cummulativeQuoteQty (double-m, the original field).
+        // cumulativeQuoteQty (single-m) is a later alias that may not be present on all endpoints.
+        // Use the double-m field and fall back to single-m to be safe.
+        var cumulativeQty = binanceOrderDto.CummulativeQuoteQty > 0
+            ? binanceOrderDto.CummulativeQuoteQty
+            : binanceOrderDto.CumulativeQuoteQty;
+        var avgPrice = binanceOrderDto.ExecutedQty > 0 ? cumulativeQty / binanceOrderDto.ExecutedQty : 0;
 
         return binanceOrderDto with { Price = avgPrice };
     }

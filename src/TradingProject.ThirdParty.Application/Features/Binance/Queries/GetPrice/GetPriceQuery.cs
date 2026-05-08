@@ -1,19 +1,23 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
+using System.Text.Json;
 using TradingProject.ThirdParty.Application.Abstractions;
+using TradingProject.ThirdParty.Application.Common.Models;
 using TradingProject.ThirdParty.Domain.Constants;
 
 namespace TradingProject.ThirdParty.Application.Features.Binance.Queries.GetPrice;
 
-public record GetPriceQuery(string Symbol) : IRequest<double>;
+public record GetPriceQuery(string Symbol) : IRequest<BinancePriceDto?>;
 
 public class GetPriceQueryHandler(
     IBinanceService binanceService,
     ICacheService cache,
-    ILogger<GetPriceQueryHandler> logger) : IRequestHandler<GetPriceQuery, double>
+    JsonSerializerOptions jsonSerializerOptions,
+    ILogger<GetPriceQueryHandler> logger) : IRequestHandler<GetPriceQuery, BinancePriceDto?>
 {
-    public async Task<double> Handle(GetPriceQuery request, CancellationToken cancellationToken)
+    public async Task<BinancePriceDto?> Handle(
+        GetPriceQuery request, CancellationToken cancellationToken)
     {
         var key = CacheKeys.Binance.Price(request.Symbol);
 
@@ -21,15 +25,20 @@ public class GetPriceQueryHandler(
         if (cached is not null)
         {
             logger.LogInformation("Returning cached price for key {Key}", key);
-            return double.Parse(cached, CultureInfo.InvariantCulture);
+            return JsonSerializer.Deserialize<BinancePriceDto>( cached, jsonSerializerOptions );
         }
 
         logger.LogInformation("Fetching price from Binance for key {Key}", key);
         var priceDto = await binanceService.GetCurrentPriceAsync(request.Symbol, cancellationToken);
-        var price = priceDto?.Price ?? 0;
+        if (priceDto is not null)
+        {
+            await cache.SetAsync(
+                key,
+                JsonSerializer.Serialize(priceDto, jsonSerializerOptions),
+                CacheKeys.Binance.PriceDuration,
+                cancellationToken);
+        }
 
-        await cache.SetAsync(key, price.ToString(CultureInfo.InvariantCulture), CacheKeys.Binance.PriceDuration, cancellationToken);
-
-        return price;
+        return priceDto;
     }
 }

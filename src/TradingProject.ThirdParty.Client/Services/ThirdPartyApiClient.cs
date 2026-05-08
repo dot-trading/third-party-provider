@@ -52,4 +52,29 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
             throw;
         }
     }
+
+    /// <inheritdoc />
+    public async Task<BinancePriceResponse?> GetPriceAsync(string symbol, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(symbol);
+
+        try
+        {
+            _logger.LogDebug("Fetching price for symbol {Symbol} from ThirdParty API (V1)", symbol);
+
+            var response = await _httpClient.GetAsync($"api/v1/Binance/price/{symbol}", cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<BinancePriceResponse>(JsonOptions, cancellationToken);
+
+            _logger.LogDebug("Successfully retrieved price {Price} for symbol {Symbol}", result?.Price, symbol);
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to fetch price for symbol {Symbol} from ThirdParty API", symbol);
+            throw;
+        }
+    }
 }
