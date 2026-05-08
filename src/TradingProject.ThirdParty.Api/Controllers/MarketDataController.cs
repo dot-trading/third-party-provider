@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Asp.Versioning;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetKlines;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetPrice;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetTicker24h;
@@ -12,6 +13,8 @@ using TradingProject.ThirdParty.Application.Features.MarketData.Queries.GetTrend
 namespace TradingProject.ThirdParty.Api.Controllers;
 
 [ApiController]
+[ApiVersion("0.0")]
+[Route("api/v{version:apiVersion}/market-data")]
 [Route("api/market-data")]
 public class MarketDataController(IMediator mediator) : ControllerBase
 {
