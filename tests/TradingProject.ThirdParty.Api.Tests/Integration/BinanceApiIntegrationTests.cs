@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using TradingProject.ThirdParty.Application.Abstractions;
+using TradingProject.ThirdParty.Application.Features.Binance.Commands.PlaceMarketBuy;
 using TradingProject.ThirdParty.Application.Common.Models;
 using TradingProject.ThirdParty.Domain.Models.Market;
 using Xunit;
@@ -379,5 +380,46 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
         result.Should().NotBeNull();
         result!.Symbol.Should().Be(symbol);
         result.Price.Should().Be(50000.0);
+    }
+
+    [Fact]
+    public async Task PlaceMarketBuy_V1_ShouldReturnSuccess()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var command = new PlaceMarketBuyCommand("BTCUSDT", 100.0);
+        var orderDto = new BinanceOrderDto(
+            "BTCUSDT", 12345, -1, "client_id", 50000.0, 0.002, 0.002, 100.0, 100.0,
+            "FILLED", "GTC", "MARKET", "BUY", 0, 0, 1715112000000, 1715112000000, 1715112000000, true, 0, "NONE");
+
+        _binanceServiceMock.Setup(s => s.PlaceMarketBuyAsync(command.Symbol, command.QuoteOrderQty, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderDto);
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1.0/Binance/order/buy", command);
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<BinanceOrderResultDto>();
+        result.Should().NotBeNull();
+        result!.OrderId.Should().Be("12345");
+        result.ExecutedQty.Should().Be(0.002);
+    }
+
+    [Fact]
+    public async Task PlaceMarketBuy_V1_InvalidCommand_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var command = new PlaceMarketBuyCommand("", -10.0); // Invalid symbol and qty
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1.0/Binance/order/buy", command);
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+        var error = await response.Content.ReadAsStringAsync();
+        error.Should().Contain("Symbol is required");
+        error.Should().Contain("Quote order quantity must be greater than zero");
     }
 }

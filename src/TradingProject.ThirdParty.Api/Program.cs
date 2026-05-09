@@ -25,6 +25,8 @@ builder.Services.AddApiVersioning(options =>
 
 var app = builder.Build();
 
+app.UseMiddleware<TradingProject.ThirdParty.Api.Middleware.ExceptionHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

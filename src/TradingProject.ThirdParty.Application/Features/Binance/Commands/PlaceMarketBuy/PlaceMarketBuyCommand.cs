@@ -1,17 +1,17 @@
 using MediatR;
 using TradingProject.ThirdParty.Application.Abstractions;
-using TradingProject.ThirdParty.Domain.Models.Trading;
+using TradingProject.ThirdParty.Application.Common.Models;
 
 namespace TradingProject.ThirdParty.Application.Features.Binance.Commands.PlaceMarketBuy;
 
-public record PlaceMarketBuyCommand(string Symbol, double QuoteOrderQty) : IRequest<OrderResult>;
+public record PlaceMarketBuyCommand(string Symbol, double QuoteOrderQty) : IRequest<BinanceOrderResultDto>;
 
 public class PlaceMarketBuyCommandHandler(IBinanceService binanceService)
-    : IRequestHandler<PlaceMarketBuyCommand, OrderResult>
+    : IRequestHandler<PlaceMarketBuyCommand, BinanceOrderResultDto>
 {
-    public async Task<OrderResult> Handle(PlaceMarketBuyCommand request, CancellationToken cancellationToken)
+    public async Task<BinanceOrderResultDto> Handle(PlaceMarketBuyCommand request, CancellationToken cancellationToken)
     {
         var result = await binanceService.PlaceMarketBuyAsync(request.Symbol, request.QuoteOrderQty, cancellationToken);
-        return new OrderResult(result.OrderId.ToString(), result.ExecutedQty, result.CumulativeQuoteQty, result.Price);
+        return new BinanceOrderResultDto(result.OrderId.ToString(), result.ExecutedQty, result.CumulativeQuoteQty, result.Price);
     }
 }
