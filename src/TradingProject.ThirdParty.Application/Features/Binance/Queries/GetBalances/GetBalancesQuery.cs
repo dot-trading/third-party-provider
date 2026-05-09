@@ -32,10 +32,6 @@ public class GetBalancesQueryHandler(
             await cache.SetAsync(key, JsonSerializer.Serialize(balancesDto), CacheKeys.Binance.BalancesDuration, cancellationToken);
         }
         
-        var balances = balancesDto?.Balances.ToDictionary(b => b.Asset, b => b.Free) ?? [];
-
-        await cache.SetAsync(key, JsonSerializer.Serialize(balances), CacheKeys.Binance.BalancesDuration, cancellationToken);
-
         return balancesDto;
     }
 }
