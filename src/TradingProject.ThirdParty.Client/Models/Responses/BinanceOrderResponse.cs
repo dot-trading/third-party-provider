@@ -13,7 +13,17 @@ public record PlaceMarketBuyRequest(
 );
 
 /// <summary>
-/// Response returned by <c>POST /api/v1/Binance/order/buy</c> (V1+).
+/// Request body for <c>POST /api/v1/Binance/order/sell</c> (V1+).
+/// </summary>
+/// <param name="Symbol">Trading pair symbol (e.g. "BTCUSDT").</param>
+/// <param name="Quantity">Amount of the base asset to sell (e.g. BTC).</param>
+public record PlaceMarketSellRequest(
+    [property: JsonPropertyName("symbol")] string Symbol,
+    [property: JsonPropertyName("quantity")] double Quantity
+);
+
+/// <summary>
+/// Response returned by <c>POST /api/v1/Binance/order/buy</c> and <c>POST /api/v1/Binance/order/sell</c> (V1+).
 /// Contains the result of a market buy order execution.
 /// </summary>
 /// <param name="OrderId">Binance-assigned order ID.</param>

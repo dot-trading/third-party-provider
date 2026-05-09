@@ -67,8 +67,15 @@ public class BinanceController(IMediator mediator) : ControllerBase
     [HttpPost("order/buy")]
     public async Task<IActionResult> PlaceMarketBuyAsync([FromBody] PlaceMarketBuyCommand command, CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(command, cancellationToken);
-        return Ok(result);
+        try
+        {
+            var result = await mediator.Send(command, cancellationToken);
+            return Ok(result);
+        }
+        catch (HttpRequestException ex) when (ex.Message.StartsWith("Binance order failed"))
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpPost("order/sell")]

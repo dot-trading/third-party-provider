@@ -87,11 +87,11 @@ public class MyService(IThirdPartyApiClient client)
 | `GetKlinesAsync(symbol, ...)`   | `GET /api/v1/Binance/klines/{symbol}`    | V1      |
 | `GetTicker24hAsync(symbol)`     | `GET /api/v1/Binance/ticker/{symbol}`    | V1      |
 | `PlaceMarketBuyAsync(...)`      | `POST /api/v1/Binance/order/buy`        | V1      |
+| `PlaceMarketSellAsync(...)`     | `POST /api/v1/Binance/order/sell`       | V1      |
 
 ### 🔜 Coming Soon (V1+)
 
 | Client Method                  | API Endpoint                          |
-| `PlaceMarketSellAsync(...)`    | `POST /api/v1/Binance/order/sell`     |
 | `GetMarketDataGlobalAsync()`   | `GET /api/v1/MarketData/global`       |
 | `GetFearAndGreedAsync()`       | `GET /api/v1/MarketData/sentiment/fear-and-greed` |
 | `GetNewsAsync(...)`            | `GET /api/v1/News`                    |
@@ -129,6 +129,29 @@ public class MyTradingService(IThirdPartyApiClient client)
 }
 ```
 
+### Place a Market Sell Order
+
+```csharp
+using TradingProject.ThirdParty.Client.Services;
+using TradingProject.ThirdParty.Client.Models.Responses;
+
+public class MyTradingService(IThirdPartyApiClient client)
+{
+    public async Task SellBitcoin()
+    {
+        var request = new PlaceMarketSellRequest("BTCUSDT", 0.1);
+        var result = await client.PlaceMarketSellAsync(request);
+        
+        if (result is not null)
+        {
+            Console.WriteLine($"Order {result.OrderId} filled: " +
+                $"{result.ExecutedQty} BTC sold @ {result.Price} USDT " +
+                $"(total: {result.CumulativeQuoteQty} USDT)");
+        }
+    }
+}
+```
+
 ### Example Mock
 
 ```csharp
@@ -138,6 +161,18 @@ mock.Setup(c => c.GetBalancesAsync(It.IsAny<CancellationToken>()))
         [new BinanceBalanceDto("BTC", 1.0, 0.0)],
         10, 10, ["SPOT"]
     ));
+
+// Mock a market buy order
+mock.Setup(c => c.PlaceMarketBuyAsync(
+        It.Is<PlaceMarketBuyRequest>(r => r.Symbol == "BTCUSDT"),
+        It.IsAny<CancellationToken>()))
+    .ReturnsAsync(new BinanceOrderResultResponse("12345", 0.002, 100.0, 50000.0));
+
+// Mock a market sell order
+mock.Setup(c => c.PlaceMarketSellAsync(
+        It.Is<PlaceMarketSellRequest>(r => r.Symbol == "BTCUSDT"),
+        It.IsAny<CancellationToken>()))
+    .ReturnsAsync(new BinanceOrderResultResponse("67890", 0.1, 5000.0, 50000.0));
 ```
 
 ---
