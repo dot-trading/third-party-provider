@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,7 +23,10 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton(
-            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+            new JsonSerializerOptions(JsonSerializerDefaults.Web)
+            {
+                NumberHandling = JsonNumberHandling.AllowReadingFromString
+            });
 
         services.AddOptions<BinanceSettings>()
             .Bind(configuration.GetSection(HttpClientNames.Binance))

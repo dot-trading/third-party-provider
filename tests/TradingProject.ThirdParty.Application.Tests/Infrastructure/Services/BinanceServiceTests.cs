@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -15,7 +16,10 @@ namespace TradingProject.ThirdParty.Application.Tests.Infrastructure.Services;
 
 public class BinanceServiceTests : IDisposable
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
+    {
+        NumberHandling = JsonNumberHandling.AllowReadingFromString
+    };
     private const string BaseUrl = "https://api.binance.com";
     private const string ApiKey = "test-api-key";
     private const string ApiSecret = "test-api-secret";
@@ -104,7 +108,7 @@ public class BinanceServiceTests : IDisposable
                     r.Method == HttpMethod.Get &&
                     r.RequestUri!.PathAndQuery.Contains("/api/v3/exchangeInfo")),
                 ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
+            .ReturnsAsync(() => new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
                 Content = new StringContent(
@@ -114,6 +118,8 @@ public class BinanceServiceTests : IDisposable
 
     /// <summary>
     /// Sets up the mock HTTP handler to return a price-ticker response.
+    /// Creates a fresh <see cref="HttpResponseMessage"/> per invocation to avoid
+    /// consuming a cached stream on repeated calls.
     /// </summary>
     private void SetupPriceResponse(string symbol, double price)
     {
@@ -132,7 +138,7 @@ public class BinanceServiceTests : IDisposable
                     r.Method == HttpMethod.Get &&
                     r.RequestUri!.PathAndQuery.Contains("/api/v3/ticker/price")),
                 ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
+            .ReturnsAsync(() => new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
                 Content = new StringContent(
@@ -153,7 +159,7 @@ public class BinanceServiceTests : IDisposable
                     r.Method == HttpMethod.Post &&
                     r.RequestUri!.PathAndQuery.Contains("/api/v3/order")),
                 ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
+            .ReturnsAsync(() => new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.OK,
                 Content = new StringContent(json, Encoding.UTF8, "application/json")
@@ -677,15 +683,17 @@ public class BinanceServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task PlaceOrderAsync_WhenNotFilled_ShouldReturnZeroAveragePrice()
+    public async Task PlaceOrderAsync_WhenNotFilled_ShouldFallbackToTickerPrice()
     {
-        // Arrange – no fills
+        // Arrange – no fills, so PlaceOrderAsync returns price=0
+        // The fallback then fetches the current ticker price
         const string symbol = "BTCUSDT";
         const double executedQty = 0.0;
         const double cummulativeQuoteQty = 0.0;
+        const double expectedFallbackPrice = 50_000.0;
 
         SetupExchangeInfoResponse(symbol, "0.001", minNotional: "10.00000000");
-        SetupPriceResponse(symbol, 50_000.0);
+        SetupPriceResponse(symbol, expectedFallbackPrice);
         SetupOrderResponse(CreateOrderJson(executedQty, cummulativeQuoteQty, status: "NEW"));
 
         // Act
@@ -693,7 +701,7 @@ public class BinanceServiceTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
-        result.Price.Should().Be(0.0);
+        result.Price.Should().Be(expectedFallbackPrice);
     }
 
     // ========================================================================

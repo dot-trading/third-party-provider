@@ -44,7 +44,7 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
             var result = await response.Content
                 .ReadFromJsonAsync<ListBinanceBalanceResponse>(JsonOptions, cancellationToken);
 
-            _logger.LogDebug("Successfully retrieved {BalanceCount} balances", result?.Balances?.Length ?? 0);
+            _logger.LogDebug("Successfully retrieved {BalanceCount} balances", result?.Balances.Length ?? 0);
             return result;
         }
         catch (HttpRequestException ex)
@@ -76,7 +76,7 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
             var result = await response.Content
                 .ReadFromJsonAsync<ListBinanceBalanceResponse>(JsonOptions, cancellationToken);
 
-            _logger.LogDebug("Successfully retrieved {BalanceCount} balances for symbol {Symbol}", result?.Balances?.Length ?? 0, symbol);
+            _logger.LogDebug("Successfully retrieved {BalanceCount} balances for symbol {Symbol}", result?.Balances.Length ?? 0, symbol);
             return result;
         }
         catch (HttpRequestException ex)
