@@ -167,9 +167,24 @@ public class BinanceService : IBinanceService
         CancellationToken cancellationToken = default)
     {
         var qty = quoteOrderQty.ToString("F8", System.Globalization.CultureInfo.InvariantCulture);
+        var encodedSymbol = Uri.EscapeDataString(symbol);
+        var timestamp = _timerService.BinanceNowDateTimeOffset();
         var query =
-            $"symbol={symbol}&side=BUY&type=MARKET&quoteOrderQty={qty}&timestamp={_timerService.BinanceNowDateTimeOffset()}";
-        return await PlaceOrderAsync(query, cancellationToken);
+            $"symbol={encodedSymbol}&side=BUY&type=MARKET&quoteOrderQty={qty}&newOrderRespType=RESULT&recvWindow=5000&timestamp={timestamp}";
+
+        var order = await PlaceOrderAsync(query, cancellationToken);
+
+        // Fallback safety: if price is still 0, fetch current ticker price to avoid division by zero later
+        if (order.Price <= 0)
+        {
+            var priceDto = await GetCurrentPriceAsync(symbol, cancellationToken);
+            if (priceDto?.Price > 0)
+            {
+                return order with { Price = priceDto.Price };
+            }
+        }
+
+        return order;
     }
 
     public async Task<BinanceOrderDto> PlaceMarketSellAsync(string symbol, double quantity,
@@ -219,7 +234,18 @@ public class BinanceService : IBinanceService
         var timestamp = _timerService.BinanceNowDateTimeOffset();
         var encodedSymbol = Uri.EscapeDataString(symbol);
         var query = $"symbol={encodedSymbol}&side=SELL&type=MARKET&quantity={qty}&newOrderRespType=RESULT&recvWindow=5000&timestamp={timestamp}";
-        return await PlaceOrderAsync(query, cancellationToken);
+        var order = await PlaceOrderAsync(query, cancellationToken);
+
+        if (order.Price <= 0)
+        {
+            var priceDto = await GetCurrentPriceAsync(symbol, cancellationToken);
+            if (priceDto?.Price > 0)
+            {
+                return order with { Price = priceDto.Price };
+            }
+        }
+
+        return order;
     }
 
     public async Task<BinanceExchangeInfoDto?> GetExchangeInfoAsync(string symbol, CancellationToken cancellationToken)

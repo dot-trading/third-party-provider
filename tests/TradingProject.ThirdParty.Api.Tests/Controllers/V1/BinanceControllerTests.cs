@@ -10,6 +10,7 @@ using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetMinNotio
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetKlines;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetTicker24h;
 using TradingProject.ThirdParty.Application.Features.Binance.Commands.PlaceMarketBuy;
+using TradingProject.ThirdParty.Application.Features.Binance.Commands.PlaceMarketSell;
 using TradingProject.ThirdParty.Domain.Models.Market;
 using Xunit;
 
@@ -203,6 +204,72 @@ public class BinanceControllerTests
         // Assert
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         okResult.Value.Should().BeEquivalentTo(expectedDto);
+        _mediatorMock.Verify(m => m.Send(command, cancellationToken), Times.Once);
+    }
+
+    [Fact]
+    public async Task PlaceMarketSellAsync_ShouldReturnOkWithResultDto()
+    {
+        // Arrange
+        var symbol = "BTCUSDT";
+        var quantity = 0.002;
+        var cancellationToken = CancellationToken.None;
+        var command = new PlaceMarketSellCommand(symbol, quantity);
+        var expectedDto = new BinanceOrderResultDto("67890", 0.002, 100.0, 50000.0);
+
+        _mediatorMock.Setup(m => m.Send(command, cancellationToken))
+            .ReturnsAsync(expectedDto);
+
+        // Act
+        var result = await _controller.PlaceMarketSellAsync(command, cancellationToken);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().BeEquivalentTo(expectedDto);
+        _mediatorMock.Verify(m => m.Send(command, cancellationToken), Times.Once);
+    }
+
+    [Fact]
+    public async Task PlaceMarketBuyAsync_WhenBinanceFails_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var symbol = "BTCUSDT";
+        var quoteOrderQty = 100.0;
+        var cancellationToken = CancellationToken.None;
+        var command = new PlaceMarketBuyCommand(symbol, quoteOrderQty);
+        const string errorMessage = "Binance order failed: insufficient balance";
+
+        _mediatorMock.Setup(m => m.Send(command, cancellationToken))
+            .ThrowsAsync(new HttpRequestException(errorMessage));
+
+        // Act
+        var result = await _controller.PlaceMarketBuyAsync(command, cancellationToken);
+
+        // Assert
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        badRequestResult.Value.Should().Be(errorMessage);
+        _mediatorMock.Verify(m => m.Send(command, cancellationToken), Times.Once);
+    }
+
+    [Fact]
+    public async Task PlaceMarketSellAsync_WhenBinanceFails_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var symbol = "BTCUSDT";
+        var quantity = 0.002;
+        var cancellationToken = CancellationToken.None;
+        var command = new PlaceMarketSellCommand(symbol, quantity);
+        const string errorMessage = "Binance order failed: insufficient balance";
+
+        _mediatorMock.Setup(m => m.Send(command, cancellationToken))
+            .ThrowsAsync(new HttpRequestException(errorMessage));
+
+        // Act
+        var result = await _controller.PlaceMarketSellAsync(command, cancellationToken);
+
+        // Assert
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        badRequestResult.Value.Should().Be(errorMessage);
         _mediatorMock.Verify(m => m.Send(command, cancellationToken), Times.Once);
     }
 }

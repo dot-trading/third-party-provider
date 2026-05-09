@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using TradingProject.ThirdParty.Application.Abstractions;
 using TradingProject.ThirdParty.Application.Features.Binance.Commands.PlaceMarketBuy;
+using TradingProject.ThirdParty.Application.Features.Binance.Commands.PlaceMarketSell;
 using TradingProject.ThirdParty.Application.Common.Models;
 using TradingProject.ThirdParty.Domain.Models.Market;
 using Xunit;
@@ -421,5 +422,46 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
         var error = await response.Content.ReadAsStringAsync();
         error.Should().Contain("Symbol is required");
         error.Should().Contain("Quote order quantity must be greater than zero");
+    }
+
+    [Fact]
+    public async Task PlaceMarketSell_V1_ShouldReturnSuccess()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var command = new PlaceMarketSellCommand("BTCUSDT", 0.002);
+        var orderDto = new BinanceOrderDto(
+            "BTCUSDT", 67890, -1, "client_id", 50000.0, 0.002, 0.002, 100.0, 100.0,
+            "FILLED", "GTC", "MARKET", "SELL", 0, 0, 1715112000000, 1715112000000, 1715112000000, true, 0, "NONE");
+
+        _binanceServiceMock.Setup(s => s.PlaceMarketSellAsync(command.Symbol, command.Quantity, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(orderDto);
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1.0/Binance/order/sell", command);
+
+        // Assert
+        response.EnsureSuccessStatusCode();
+        var result = await response.Content.ReadFromJsonAsync<BinanceOrderResultDto>();
+        result.Should().NotBeNull();
+        result!.OrderId.Should().Be("67890");
+        result.ExecutedQty.Should().Be(0.002);
+    }
+
+    [Fact]
+    public async Task PlaceMarketSell_V1_InvalidCommand_ShouldReturnBadRequest()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var command = new PlaceMarketSellCommand("", -1.0); // Invalid symbol and quantity
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/v1.0/Binance/order/sell", command);
+
+        // Assert
+        response.StatusCode.Should().Be(System.Net.HttpStatusCode.BadRequest);
+        var error = await response.Content.ReadAsStringAsync();
+        error.Should().Contain("Symbol is required");
+        error.Should().Contain("Quantity must be greater than zero");
     }
 }
