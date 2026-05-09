@@ -66,4 +66,13 @@ public interface IThirdPartyApiClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The ticker response, or <c>null</c> if the symbol is not found.</returns>
     Task<BinanceTicker24HResponse?> GetTicker24hAsync(string symbol, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Executes a market buy order on Binance.
+    /// Corresponds to <c>POST /api/v1/Binance/order/buy</c>.
+    /// </summary>
+    /// <param name="request">The buy order details (symbol and quote order quantity).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The order result response, or <c>null</c> if the order could not be placed.</returns>
+    Task<BinanceOrderResultResponse?> PlaceMarketBuyAsync(PlaceMarketBuyRequest request, CancellationToken cancellationToken = default);
 }

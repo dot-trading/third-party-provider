@@ -198,4 +198,32 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
             throw;
         }
     }
+
+    /// <inheritdoc />
+    public async Task<BinanceOrderResultResponse?> PlaceMarketBuyAsync(PlaceMarketBuyRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        try
+        {
+            _logger.LogDebug("Placing market buy order for symbol {Symbol} with quoteQty {QuoteQty} from ThirdParty API (V1)",
+                request.Symbol, request.QuoteOrderQty);
+
+            var response = await _httpClient.PostAsJsonAsync("api/v1/Binance/order/buy", request, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<BinanceOrderResultResponse>(JsonOptions, cancellationToken);
+
+            _logger.LogDebug("Successfully placed market buy order for symbol {Symbol}: orderId={OrderId}",
+                request.Symbol, result?.OrderId);
+
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to place market buy order for symbol {Symbol} from ThirdParty API", request.Symbol);
+            throw;
+        }
+    }
 }

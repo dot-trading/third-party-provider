@@ -86,11 +86,11 @@ public class MyService(IThirdPartyApiClient client)
 | `GetMinNotionalAsync(symbol)`   | `GET /api/v1/Binance/notional/{symbol}`  | V1      |
 | `GetKlinesAsync(symbol, ...)`   | `GET /api/v1/Binance/klines/{symbol}`    | V1      |
 | `GetTicker24hAsync(symbol)`     | `GET /api/v1/Binance/ticker/{symbol}`    | V1      |
+| `PlaceMarketBuyAsync(...)`      | `POST /api/v1/Binance/order/buy`        | V1      |
 
 ### 🔜 Coming Soon (V1+)
 
 | Client Method                  | API Endpoint                          |
-| `PlaceMarketBuyAsync(...)`     | `POST /api/v1/Binance/order/buy`      |
 | `PlaceMarketSellAsync(...)`    | `POST /api/v1/Binance/order/sell`     |
 | `GetMarketDataGlobalAsync()`   | `GET /api/v1/MarketData/global`       |
 | `GetFearAndGreedAsync()`       | `GET /api/v1/MarketData/sentiment/fear-and-greed` |
@@ -105,6 +105,29 @@ The library is designed for testability:
 1. **Mock the interface** — inject `Mock<IThirdPartyApiClient>` in unit tests.
 2. **Use the test project** — run `dotnet test` from the solution root to execute all client tests.
 3. **Contract tests** — the test project includes a deserialization test that validates against the actual V1 API JSON contract.
+
+### Place a Market Buy Order
+
+```csharp
+using TradingProject.ThirdParty.Client.Services;
+using TradingProject.ThirdParty.Client.Models.Responses;
+
+public class MyTradingService(IThirdPartyApiClient client)
+{
+    public async Task BuyBitcoin()
+    {
+        var request = new PlaceMarketBuyRequest("BTCUSDT", 100.0);
+        var result = await client.PlaceMarketBuyAsync(request);
+        
+        if (result is not null)
+        {
+            Console.WriteLine($"Order {result.OrderId} filled: " +
+                $"{result.ExecutedQty} BTC @ {result.Price} USDT " +
+                $"(total: {result.CumulativeQuoteQty} USDT)");
+        }
+    }
+}
+```
 
 ### Example Mock
 
@@ -126,7 +149,8 @@ src/TradingProject.ThirdParty.Client/
 ├── Configuration/
 │   └── ThirdPartyApiClientOptions.cs    # Strongly-typed options
 ├── Models/Responses/
-│   └── BinanceBalanceResponse.cs        # V1 response DTOs
+│   ├── BinanceBalanceResponse.cs        # V1 balance DTOs
+│   └── BinanceOrderResponse.cs          # V1 order request/response DTOs
 ├── Services/
 │   ├── IThirdPartyApiClient.cs          # Client interface
 │   └── ThirdPartyApiClient.cs           # HttpClient implementation
