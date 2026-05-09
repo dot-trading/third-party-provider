@@ -65,14 +65,14 @@ public class BinanceController(IMediator mediator) : ControllerBase
     }
 
     [HttpPost("order/buy")]
-    public async Task<IActionResult> PlaceMarketBuy([FromBody] PlaceMarketBuyCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> PlaceMarketBuyAsync([FromBody] PlaceMarketBuyCommand command, CancellationToken cancellationToken)
     {
         var result = await mediator.Send(command, cancellationToken);
         return Ok(result);
     }
 
     [HttpPost("order/sell")]
-    public async Task<IActionResult> PlaceMarketSell([FromBody] PlaceMarketSellCommand command, CancellationToken cancellationToken)
+    public async Task<IActionResult> PlaceMarketSellAsync([FromBody] PlaceMarketSellCommand command, CancellationToken cancellationToken)
     {
         try
         {

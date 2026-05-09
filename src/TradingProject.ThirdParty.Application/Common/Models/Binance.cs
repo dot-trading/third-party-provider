@@ -108,3 +108,5 @@ public record BinanceFilterDto(string FilterType, double? StepSize, double? MinN
     public double? NotionalValue => MinNotional ?? Notional;
     public double? StepSizeValue => StepSize;
 };
+
+public record BinanceOrderResultDto(string OrderId, double ExecutedQty, double CumulativeQuoteQty, double Price);

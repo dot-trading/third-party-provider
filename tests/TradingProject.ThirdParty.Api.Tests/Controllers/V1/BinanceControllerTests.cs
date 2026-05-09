@@ -9,6 +9,7 @@ using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetPrice;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetMinNotional;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetKlines;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetTicker24h;
+using TradingProject.ThirdParty.Application.Features.Binance.Commands.PlaceMarketBuy;
 using TradingProject.ThirdParty.Domain.Models.Market;
 using Xunit;
 
@@ -181,5 +182,27 @@ public class BinanceControllerTests
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
         okResult.Value.Should().BeEquivalentTo(expectedDto);
         _mediatorMock.Verify(m => m.Send(It.Is<GetTicker24hQuery>(q => q.Symbol == symbol), cancellationToken), Times.Once);
+    }
+
+    [Fact]
+    public async Task PlaceMarketBuyAsync_ShouldReturnOkWithResultDto()
+    {
+        // Arrange
+        var symbol = "BTCUSDT";
+        var quoteOrderQty = 100.0;
+        var cancellationToken = CancellationToken.None;
+        var command = new PlaceMarketBuyCommand(symbol, quoteOrderQty);
+        var expectedDto = new BinanceOrderResultDto("12345", 0.002, 100.0, 50000.0);
+
+        _mediatorMock.Setup(m => m.Send(command, cancellationToken))
+            .ReturnsAsync(expectedDto);
+
+        // Act
+        var result = await _controller.PlaceMarketBuyAsync(command, cancellationToken);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().BeEquivalentTo(expectedDto);
+        _mediatorMock.Verify(m => m.Send(command, cancellationToken), Times.Once);
     }
 }
