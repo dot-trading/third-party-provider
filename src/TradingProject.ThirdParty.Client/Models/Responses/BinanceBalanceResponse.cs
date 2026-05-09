@@ -10,8 +10,8 @@ namespace TradingProject.ThirdParty.Client.Models.Responses;
 /// <param name="Locked">Locked/held balance.</param>
 public record BinanceBalanceDto(
     [property: JsonPropertyName("asset")] string Asset,
-    [property: JsonPropertyName("free")] double Free,
-    [property: JsonPropertyName("locked")] double Locked
+    [property: JsonPropertyName("free")] decimal Free,
+    [property: JsonPropertyName("locked")] decimal Locked
 );
 
 /// <summary>
@@ -33,7 +33,7 @@ public record ListBinanceBalanceResponse(
 /// </summary>
 /// <param name="Price">Current market price of the trading pair.</param>
 public record BinancePriceResponse(
-    [property: JsonPropertyName("price")] double Price
+    [property: JsonPropertyName("price")] decimal Price
 );
 
 /// <summary>
@@ -46,9 +46,9 @@ public record BinancePriceResponse(
 /// <param name="Notional">The minimum notional value (newer field name).</param>
 public record BinanceNotionalResponse(
     [property: JsonPropertyName("filterType")] string FilterType,
-    [property: JsonPropertyName("stepSize")] double? StepSize,
-    [property: JsonPropertyName("minNotional")] double? MinNotional,
-    [property: JsonPropertyName("notional")] double? Notional
+    [property: JsonPropertyName("stepSize")] decimal? StepSize,
+    [property: JsonPropertyName("minNotional")] decimal? MinNotional,
+    [property: JsonPropertyName("notional")] decimal? Notional
 );
 
 /// <summary>
@@ -63,11 +63,11 @@ public record BinanceNotionalResponse(
 /// <param name="Volume">Trading volume in base asset.</param>
 public record BinanceKLineResponse(
     [property: JsonPropertyName("openTime")] long OpenTime,
-    [property: JsonPropertyName("open")] double Open,
-    [property: JsonPropertyName("high")] double High,
-    [property: JsonPropertyName("low")] double Low,
-    [property: JsonPropertyName("close")] double Close,
-    [property: JsonPropertyName("volume")] double Volume
+    [property: JsonPropertyName("open")] decimal Open,
+    [property: JsonPropertyName("high")] decimal High,
+    [property: JsonPropertyName("low")] decimal Low,
+    [property: JsonPropertyName("close")] decimal Close,
+    [property: JsonPropertyName("volume")] decimal Volume
 );
 
 /// <summary>
@@ -82,9 +82,9 @@ public record BinanceKLineResponse(
 /// <param name="LowPrice">Lowest price in the last 24 hours.</param>
 public record BinanceTicker24HResponse(
     [property: JsonPropertyName("symbol")] string Symbol,
-    [property: JsonPropertyName("price")] double Price,
-    [property: JsonPropertyName("priceChangePercent")] double PriceChangePercent,
-    [property: JsonPropertyName("quoteVolume")] double QuoteVolume,
-    [property: JsonPropertyName("highPrice")] double HighPrice,
-    [property: JsonPropertyName("lowPrice")] double LowPrice
+    [property: JsonPropertyName("price")] decimal Price,
+    [property: JsonPropertyName("priceChangePercent")] decimal PriceChangePercent,
+    [property: JsonPropertyName("quoteVolume")] decimal QuoteVolume,
+    [property: JsonPropertyName("highPrice")] decimal HighPrice,
+    [property: JsonPropertyName("lowPrice")] decimal LowPrice
 );

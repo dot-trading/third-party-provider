@@ -9,7 +9,7 @@ namespace TradingProject.ThirdParty.Client.Models.Responses;
 /// <param name="QuoteOrderQty">Amount to spend in quote asset (e.g. USDT).</param>
 public record PlaceMarketBuyRequest(
     [property: JsonPropertyName("symbol")] string Symbol,
-    [property: JsonPropertyName("quoteOrderQty")] double QuoteOrderQty
+    [property: JsonPropertyName("quoteOrderQty")] decimal QuoteOrderQty
 );
 
 /// <summary>
@@ -19,7 +19,7 @@ public record PlaceMarketBuyRequest(
 /// <param name="Quantity">Amount of the base asset to sell (e.g. BTC).</param>
 public record PlaceMarketSellRequest(
     [property: JsonPropertyName("symbol")] string Symbol,
-    [property: JsonPropertyName("quantity")] double Quantity
+    [property: JsonPropertyName("quantity")] decimal Quantity
 );
 
 /// <summary>
@@ -32,7 +32,7 @@ public record PlaceMarketSellRequest(
 /// <param name="Price">Average fill price.</param>
 public record BinanceOrderResultResponse(
     [property: JsonPropertyName("orderId")] string OrderId,
-    [property: JsonPropertyName("executedQty")] double ExecutedQty,
-    [property: JsonPropertyName("cumulativeQuoteQty")] double CumulativeQuoteQty,
-    [property: JsonPropertyName("price")] double Price
+    [property: JsonPropertyName("executedQty")] decimal ExecutedQty,
+    [property: JsonPropertyName("cumulativeQuoteQty")] decimal CumulativeQuoteQty,
+    [property: JsonPropertyName("price")] decimal Price
 );
