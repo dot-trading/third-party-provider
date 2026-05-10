@@ -84,4 +84,12 @@ public interface IThirdPartyApiClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The order result response, or <c>null</c> if the order could not be placed.</returns>
     Task<BinanceOrderResultResponse?> PlaceMarketSellAsync(PlaceMarketSellRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Retrieves the current Fear &amp; Greed Index from alternative.me.
+    /// Corresponds to <c>GET /api/v1/MarketData/sentiment/fear-and-greed</c>.
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The Fear &amp; Greed Index response, or <c>null</c> if data is unavailable.</returns>
+    Task<FearAndGreedResponse?> GetFearAndGreedAsync(CancellationToken cancellationToken = default);
 }

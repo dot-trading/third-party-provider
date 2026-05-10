@@ -254,4 +254,36 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
             throw;
         }
     }
+
+    /// <inheritdoc />
+    public async Task<FearAndGreedResponse?> GetFearAndGreedAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Fetching Fear & Greed Index from ThirdParty API (V1)");
+
+            var response = await _httpClient.GetAsync("api/v1/MarketData/sentiment/fear-and-greed", cancellationToken);
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                _logger.LogDebug("Fear & Greed Index not found");
+                return null;
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<FearAndGreedResponse>(JsonOptions, cancellationToken);
+
+            _logger.LogDebug("Successfully retrieved Fear & Greed Index: Value={Value}, Classification={Classification}",
+                result?.Value, result?.Classification);
+
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to fetch Fear & Greed Index from ThirdParty API");
+            throw;
+        }
+    }
 }
