@@ -262,7 +262,7 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
         {
             _logger.LogDebug("Fetching Fear & Greed Index from ThirdParty API (V1)");
 
-            var response = await _httpClient.GetAsync("api/v1/MarketData/sentiment/fear-and-greed", cancellationToken);
+            var response = await _httpClient.GetAsync("api/v1/market-data/sentiment/fear-and-greed", cancellationToken);
 
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
