@@ -1613,7 +1613,7 @@ public class ThirdPartyApiClientTests
                 "SendAsync",
                 ItExpr.Is<HttpRequestMessage>(r =>
                     r.Method == HttpMethod.Get &&
-                    r.RequestUri!.PathAndQuery == "/api/v1/MarketData/sentiment/fear-and-greed"),
+                    r.RequestUri!.PathAndQuery == "/api/v1/market-data/sentiment/fear-and-greed"),
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
@@ -1715,7 +1715,7 @@ public class ThirdPartyApiClientTests
                 "SendAsync",
                 ItExpr.Is<HttpRequestMessage>(r =>
                     r.Method == HttpMethod.Get &&
-                    r.RequestUri!.PathAndQuery == "/api/v1/MarketData/sentiment/fear-and-greed"),
+                    r.RequestUri!.PathAndQuery == "/api/v1/market-data/sentiment/fear-and-greed"),
                 ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
