@@ -1590,4 +1590,146 @@ public class ThirdPartyApiClientTests
         result.CumulativeQuoteQty.Should().Be(4750.0m);
         result.Price.Should().Be(47500.0m);
     }
+
+    // =========================================================================
+    //  GetFearAndGreedAsync()
+    // =========================================================================
+
+    [Fact]
+    public async Task GetFearAndGreedAsync_WhenApiReturnsValidResponse_ShouldReturnDeserializedResult()
+    {
+        // Arrange
+        const string v1ApiJson = """
+        {
+            "value": 25,
+            "classification": "Extreme Fear",
+            "timestamp": 1700000000
+        }
+        """;
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(r =>
+                    r.Method == HttpMethod.Get &&
+                    r.RequestUri!.PathAndQuery == "/api/v1/MarketData/sentiment/fear-and-greed"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(v1ApiJson)
+            });
+
+        // Act
+        var result = await _client.GetFearAndGreedAsync(CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Value.Should().Be(25);
+        result.Classification.Should().Be("Extreme Fear");
+        result.Timestamp.Should().Be(1700000000);
+    }
+
+    [Fact]
+    public async Task GetFearAndGreedAsync_WhenApiReturnsNull_ShouldReturnNull()
+    {
+        // Arrange
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NotFound
+            });
+
+        // Act
+        var result = await _client.GetFearAndGreedAsync(CancellationToken.None);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetFearAndGreedAsync_WhenApiReturnsError_ShouldThrowHttpRequestException()
+    {
+        // Arrange
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+        // Act
+        var act = () => _client.GetFearAndGreedAsync(CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<HttpRequestException>();
+    }
+
+    [Fact]
+    public async Task GetFearAndGreedAsync_WhenCancelled_ShouldThrowTaskCanceledException()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new TaskCanceledException());
+
+        // Act
+        var act = () => _client.GetFearAndGreedAsync(cts.Token);
+
+        // Assert
+        await act.Should().ThrowAsync<TaskCanceledException>();
+    }
+
+    [Fact]
+    public async Task GetFearAndGreedAsync_ResponseMatchesV1ApiContract_ShouldDeserializeSuccessfully()
+    {
+        // Arrange — this JSON mirrors what the actual V1 API returns
+        const string v1ApiJson = """
+        {
+            "value": 72,
+            "classification": "Greed",
+            "timestamp": 1700100000
+        }
+        """;
+
+        _handlerMock
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(r =>
+                    r.Method == HttpMethod.Get &&
+                    r.RequestUri!.PathAndQuery == "/api/v1/MarketData/sentiment/fear-and-greed"),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(v1ApiJson)
+            });
+
+        // Act
+        var result = await _client.GetFearAndGreedAsync(CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Value.Should().Be(72);
+        result.Classification.Should().Be("Greed");
+        result.Timestamp.Should().Be(1700100000);
+    }
 }

@@ -14,7 +14,7 @@ namespace TradingProject.ThirdParty.Api.Controllers.V1;
 public class MarketDataController(IMediator mediator) : ControllerBase
 {
     [HttpGet("sentiment/fear-and-greed")]
-    public async Task<IActionResult> GetFearAndGreed(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetFearAndGreedAsync(CancellationToken cancellationToken)
     {
         var result = await mediator.Send(new GetFearAndGreedQuery(), cancellationToken);
         return Ok(result);
