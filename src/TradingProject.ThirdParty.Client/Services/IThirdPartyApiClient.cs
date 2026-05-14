@@ -92,4 +92,32 @@ public interface IThirdPartyApiClient
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The Fear &amp; Greed Index response, or <c>null</c> if data is unavailable.</returns>
     Task<FearAndGreedResponse?> GetFearAndGreedAsync(CancellationToken cancellationToken = default);
+
+    // ========================================================================
+    // AI / AgentIA
+    // ========================================================================
+
+    /// <summary>
+    /// Invokes Gemini AI with the Free plan.
+    /// Corresponds to <c>POST /api/v1/AgentIA/gemini/free</c>.
+    /// </summary>
+    Task<AiResponse?> InvokeGeminiFreeAsync(AiServiceRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Invokes Gemini AI with the Paid plan.
+    /// Corresponds to <c>POST /api/v1/AgentIA/gemini/paid</c>.
+    /// </summary>
+    Task<AiResponse?> InvokeGeminiPaidAsync(AiServiceRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Invokes Grok AI.
+    /// Corresponds to <c>POST /api/v1/AgentIA/grok/paid</c>.
+    /// </summary>
+    Task<AiResponse?> InvokeGrokAsync(AiServiceRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Invokes Gemini with automatic fallback (Free → Paid).
+    /// Corresponds to <c>POST /api/v1/AgentIA/fallback</c>.
+    /// </summary>
+    Task<AiResponse?> InvokeGeminiWithFallbackAsync(AiServiceRequest request, CancellationToken cancellationToken = default);
 }

@@ -286,4 +286,113 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
             throw;
         }
     }
+
+    // ========================================================================
+    // AI / AgentIA
+    // ========================================================================
+
+    /// <inheritdoc />
+    public async Task<AiResponse?> InvokeGeminiFreeAsync(AiServiceRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        try
+        {
+            _logger.LogDebug("Invoking Gemini Free via AgentIA");
+
+            var response = await _httpClient.PostAsJsonAsync(
+                "api/v1/AgentIA/gemini/free", request, JsonOptions, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<AiResponse>(JsonOptions, cancellationToken);
+
+            _logger.LogDebug("Gemini Free response: IsSuccess={IsSuccess}", result?.IsSuccess);
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to invoke Gemini Free");
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<AiResponse?> InvokeGeminiPaidAsync(AiServiceRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        try
+        {
+            _logger.LogDebug("Invoking Gemini Paid via AgentIA");
+
+            var response = await _httpClient.PostAsJsonAsync(
+                "api/v1/AgentIA/gemini/paid", request, JsonOptions, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<AiResponse>(JsonOptions, cancellationToken);
+
+            _logger.LogDebug("Gemini Paid response: IsSuccess={IsSuccess}", result?.IsSuccess);
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to invoke Gemini Paid");
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<AiResponse?> InvokeGrokAsync(AiServiceRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        try
+        {
+            _logger.LogDebug("Invoking Grok via AgentIA");
+
+            var response = await _httpClient.PostAsJsonAsync(
+                "api/v1/AgentIA/grok/paid", request, JsonOptions, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<AiResponse>(JsonOptions, cancellationToken);
+
+            _logger.LogDebug("Grok response: IsSuccess={IsSuccess}", result?.IsSuccess);
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to invoke Grok");
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<AiResponse?> InvokeGeminiWithFallbackAsync(AiServiceRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        try
+        {
+            _logger.LogDebug("Invoking Gemini with fallback (Free → Paid) via AgentIA");
+
+            var response = await _httpClient.PostAsJsonAsync(
+                "api/v1/AgentIA/fallback", request, JsonOptions, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<AiResponse>(JsonOptions, cancellationToken);
+
+            _logger.LogDebug("Gemini fallback response: IsSuccess={IsSuccess}, PlanType={PlanType}",
+                result?.IsSuccess, result?.PlanType);
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to invoke Gemini with fallback");
+            throw;
+        }
+    }
 }

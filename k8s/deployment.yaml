@@ -16,45 +16,68 @@ spec:
         app: third-party-provider
     spec:
       containers:
-      - name: third-party-provider
-        image: hsaii/third-party-provider:latest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 8080
-        envFrom:
-          - configMapRef:
-              name: service-endpoints
-        env:
-        - name: ASPNETCORE_ENVIRONMENT
-          value: "Production"
-        - name: BINANCE__APIKEY
-          valueFrom:
-            secretKeyRef:
-              name: trading-secrets
-              key: binance-api-key
-        - name: BINANCE__APISECRET
-          valueFrom:
-            secretKeyRef:
-              name: trading-secrets
-              key: binance-api-secret
-        - name: BINANCE__BASEURL
-          value: "https://api.binance.com"
-        - name: COINGECKO__APIKEY
-          valueFrom:
-            secretKeyRef:
-              name: trading-secrets
-              key: coingecko-api-key
-        - name: COINGECKO__BASEURL
-          value: "https://api.coingecko.com/api/v3/"
-        - name: ALTERNATIVEME__BASEURL
-          value: "https://api.alternative.me/"
-        resources:
-          limits:
-            memory: "256Mi"
-            cpu: "250m"
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
+        - name: third-party-provider
+          image: hsaii/third-party-provider:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: service-endpoints
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: BINANCE__APIKEY
+              valueFrom:
+                secretKeyRef:
+                  name: trading-secrets
+                  key: binance-api-key
+            - name: BINANCE__APISECRET
+              valueFrom:
+                secretKeyRef:
+                  name: trading-secrets
+                  key: binance-api-secret
+            - name: BINANCE__BASEURL
+              value: "https://api.binance.com"
+            - name: COINGECKO__APIKEY
+              valueFrom:
+                secretKeyRef:
+                  name: trading-secrets
+                  key: coingecko-api-key
+            - name: COINGECKO__BASEURL
+              value: "https://api.coingecko.com/api/v3/"
+            - name: ALTERNATIVEME__BASEURL
+              value: "https://api.alternative.me/"
+            - name: GEMINI__FREEAPIKEY
+              valueFrom:
+                secretKeyRef:
+                  name: ai-service-secrets
+                  key: gemini-free-api-key
+            - name: GEMINI__PAIDAPIKEY
+              valueFrom:
+                secretKeyRef:
+                  name: ai-service-secrets
+                  key: gemini-paid-api-key
+            - name: GEMINI__BASEURL
+              value: "https://generativelanguage.googleapis.com"
+            - name: GEMINI__MODEL
+              value: "gemini-2.5-flash"
+            - name: XAI__APIKEY
+              valueFrom:
+                secretKeyRef:
+                  name: ai-service-secrets
+                  key: grok-api-key
+            - name: XAI__BASEURL
+              value: "https://api.x.ai"
+            - name: XAI__MODEL
+              value: "grok-3"
+          resources:
+            limits:
+              memory: "256Mi"
+              cpu: "250m"
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
 
 ---
 apiVersion: v1
@@ -67,8 +90,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 80
-    targetPort: 8080
-    protocol: TCP
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
   selector:
     app: third-party-provider

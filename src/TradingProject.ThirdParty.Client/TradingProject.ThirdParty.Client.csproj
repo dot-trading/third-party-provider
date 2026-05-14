@@ -9,7 +9,7 @@
 
     <!-- NuGet package metadata -->
     <PackageId>TradingProject.ThirdParty.Client</PackageId>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <Authors>TradingProject</Authors>
     <Description>Client library for the Third-Party Provider API (V1+). Provides typed services and DTOs for consuming Binance, market data, and trading endpoints.</Description>
     <PackageTags>third-party;binance;trading;api-client</PackageTags>

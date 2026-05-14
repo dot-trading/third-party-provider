@@ -44,6 +44,14 @@ public static class DependencyInjection
             .Bind(configuration.GetSection(HttpClientNames.AlternativeMe))
             .ValidateOnStart();
 
+        services.AddOptions<GeminiSettings>()
+            .Bind(configuration.GetSection(HttpClientNames.Gemini))
+            .ValidateOnStart();
+
+        services.AddOptions<GrokSettings>()
+            .Bind(configuration.GetSection(HttpClientNames.XAi))
+            .ValidateOnStart();
+
         services.AddOptions<RedisSettings>()
             .Bind(configuration.GetSection("Redis"))
             .ValidateOnStart();
@@ -85,11 +93,25 @@ public static class DependencyInjection
             client.WithDefaultRequestHeaders();
         }).AddStandardResilienceHandler();
 
+        services.AddHttpClient(HttpClientNames.Gemini, (sp, client) =>
+        {
+            var settings = sp.GetRequiredService<IOptions<GeminiSettings>>().Value;
+            client.BaseAddress = new Uri(settings.BaseUrl);
+            client.WithDefaultRequestHeaders();
+        }).AddStandardResilienceHandler();
+
+        services.AddHttpClient(HttpClientNames.XAi, client =>
+        {
+            client.BaseAddress = new Uri("https://api.x.ai");
+            client.WithDefaultRequestHeaders();
+        }).AddStandardResilienceHandler();
+
         services.AddTransient<IBinanceService, BinanceService>();
         services.AddTransient<ISentimentService, AlternativeMeService>();
         services.AddTransient<ICoinGeckoService, CoinGeckoService>();
         services.AddTransient<ITimerService, TimerService>();
         services.AddTransient<INewsService, RssNewsService>();
+        services.AddTransient<IAgentIAService, AgentIAService>();
 
         RegisterCacheService(services);
 
@@ -112,7 +134,7 @@ public static class DependencyInjection
             return cacheSettings.Provider switch
             {
                 "Memory" => CreateMemoryCacheService(),
-                _        => CreateRedisCacheService(sp),
+                _ => CreateRedisCacheService(sp),
             };
         });
     }
