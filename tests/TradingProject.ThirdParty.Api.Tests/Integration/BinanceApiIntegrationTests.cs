@@ -388,7 +388,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
     {
         // Arrange
         var client = _factory.CreateClient();
-        var command = new PlaceMarketBuyCommand("BTCUSDT", 100.0);
+        var command = new PlaceMarketBuyCommand("BTCUSDT", 100.0m);
         var orderDto = new BinanceOrderDto(
             "BTCUSDT", 12345, -1, "client_id", 50000.0, 0.002, 0.002, 100.0, 100.0,
             "FILLED", "GTC", "MARKET", "BUY", 0, 0, 1715112000000, 1715112000000, 1715112000000, true, 0, "NONE");
@@ -412,7 +412,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
     {
         // Arrange
         var client = _factory.CreateClient();
-        var command = new PlaceMarketBuyCommand("", -10.0); // Invalid symbol and qty
+        var command = new PlaceMarketBuyCommand("", -10.0m); // Invalid symbol and qty
 
         // Act
         var response = await client.PostAsJsonAsync("/api/v1.0/Binance/order/buy", command);
@@ -429,7 +429,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
     {
         // Arrange
         var client = _factory.CreateClient();
-        var command = new PlaceMarketSellCommand("BTCUSDT", 0.002);
+        var command = new PlaceMarketSellCommand("BTCUSDT", 0.002m);
         var orderDto = new BinanceOrderDto(
             "BTCUSDT", 67890, -1, "client_id", 50000.0, 0.002, 0.002, 100.0, 100.0,
             "FILLED", "GTC", "MARKET", "SELL", 0, 0, 1715112000000, 1715112000000, 1715112000000, true, 0, "NONE");
@@ -453,7 +453,7 @@ public class BinanceApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
     {
         // Arrange
         var client = _factory.CreateClient();
-        var command = new PlaceMarketSellCommand("", -1.0); // Invalid symbol and quantity
+        var command = new PlaceMarketSellCommand("", -1.0m); // Invalid symbol and quantity
 
         // Act
         var response = await client.PostAsJsonAsync("/api/v1.0/Binance/order/sell", command);

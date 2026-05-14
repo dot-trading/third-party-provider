@@ -237,7 +237,7 @@ public class BinanceServiceTests : IDisposable
     {
         // Arrange
         const string symbol = "BTCUSDT";
-        const double quantity = 1.234;
+        const decimal quantity = 1.234m;
         const double stepSize = 0.001;
         const double price = 50_000.0;
         const double executedQty = 1.234;
@@ -292,7 +292,7 @@ public class BinanceServiceTests : IDisposable
             });
 
         // Act
-        var act = () => _sut.PlaceMarketSellAsync(symbol, 1.0);
+        var act = () => _sut.PlaceMarketSellAsync(symbol, 1.0m);
 
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>()
@@ -330,7 +330,7 @@ public class BinanceServiceTests : IDisposable
                 Content = new StringContent(exchangeInfoJson, Encoding.UTF8, "application/json")
             });
 
-        var act = () => _sut.PlaceMarketSellAsync(symbol, 1.0);
+        var act = () => _sut.PlaceMarketSellAsync(symbol, 1.0m);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*LotStepSize missing or invalid*");
@@ -345,7 +345,7 @@ public class BinanceServiceTests : IDisposable
     [InlineData(0.0, 0.001)]
     [InlineData(-0.5, 0.001)]
     public async Task PlaceMarketSellAsync_WhenAlignedQtyIsZeroOrNegative_ShouldThrow(
-        double quantity, double stepSize)
+        decimal quantity, double stepSize)
     {
         const string symbol = "BTCUSDT";
 
@@ -369,7 +369,7 @@ public class BinanceServiceTests : IDisposable
     {
         // Arrange
         const string symbol = "BTCUSDT";
-        const double quantity = 0.001;
+        const decimal quantity = 0.001m;
         const double stepSize = 0.001;
         const double price = 100.0;       // order value = 0.001 * 100 = 0.10 USDT
         const string minNotional = "10.00000000"; // minimum is 10 USDT
@@ -396,7 +396,7 @@ public class BinanceServiceTests : IDisposable
         SetupOrderResponse(CreateOrderJson(0.001, 0.10));
 
         // Act – should succeed even with a very small value because there's no MIN_NOTIONAL check
-        var result = await _sut.PlaceMarketSellAsync(symbol, 0.001);
+        var result = await _sut.PlaceMarketSellAsync(symbol, 0.001m);
 
         // Assert
         result.Should().NotBeNull();
@@ -415,7 +415,7 @@ public class BinanceServiceTests : IDisposable
     [InlineData(15.6789, 0.01, "15.67")]
     [InlineData(100.0, 10.0, "100")]
     public async Task PlaceMarketSellAsync_ShouldAlignQuantityToStepSize_AndFormatCorrectly(
-        double quantity, double stepSize, string expectedFormattedQty)
+        decimal quantity, double stepSize, string expectedFormattedQty)
     {
         // Arrange
         const string symbol = "BTCUSDT";
@@ -459,7 +459,7 @@ public class BinanceServiceTests : IDisposable
         SetupOrderResponseWithCapture(CreateOrderJson(1.234, 61_700.0), out var requestSource);
 
         // Act
-        await _sut.PlaceMarketSellAsync(symbol, 1.234);
+        await _sut.PlaceMarketSellAsync(symbol, 1.234m);
 
         // Assert
         var request = await requestSource.Task.WaitAsync(TimeSpan.FromSeconds(2));
@@ -491,7 +491,7 @@ public class BinanceServiceTests : IDisposable
         SetupOrderResponseWithCapture(CreateOrderJson(1.0, 50_000.0), out var requestSource);
 
         // Act
-        await _sut.PlaceMarketSellAsync(symbol, 1.0);
+        await _sut.PlaceMarketSellAsync(symbol, 1.0m);
 
         // Assert
         var request = await requestSource.Task.WaitAsync(TimeSpan.FromSeconds(2));
@@ -532,7 +532,7 @@ public class BinanceServiceTests : IDisposable
         SetupOrderResponse(CreateOrderJson(1.234, 61_700.0));
 
         // Act
-        var result = await _sut.PlaceMarketSellAsync(symbol, 1.234);
+        var result = await _sut.PlaceMarketSellAsync(symbol, 1.234m);
 
         // Assert
         result.Should().NotBeNull();
@@ -584,7 +584,7 @@ public class BinanceServiceTests : IDisposable
             });
 
         // Act
-        var act = () => _sut.PlaceMarketSellAsync(symbol, 1.0);
+        var act = () => _sut.PlaceMarketSellAsync(symbol, 1.0m);
 
         // Assert
         await act.Should().ThrowAsync<JsonException>();
@@ -614,7 +614,7 @@ public class BinanceServiceTests : IDisposable
             });
 
         // Act
-        var act = () => _sut.PlaceMarketSellAsync(symbol, 1.0);
+        var act = () => _sut.PlaceMarketSellAsync(symbol, 1.0m);
 
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>()
@@ -648,7 +648,7 @@ public class BinanceServiceTests : IDisposable
             });
 
         // Act
-        var act = () => _sut.PlaceMarketSellAsync(symbol, 1.0);
+        var act = () => _sut.PlaceMarketSellAsync(symbol, 1.0m);
 
         // Assert
         var ex = await act.Should().ThrowAsync<HttpRequestException>()
@@ -675,7 +675,7 @@ public class BinanceServiceTests : IDisposable
         SetupOrderResponse(CreateOrderJson(executedQty, cummulativeQuoteQty));
 
         // Act
-        var result = await _sut.PlaceMarketSellAsync(symbol, 0.02);
+        var result = await _sut.PlaceMarketSellAsync(symbol, 0.02m);
 
         // Assert
         result.Should().NotBeNull();
@@ -697,7 +697,7 @@ public class BinanceServiceTests : IDisposable
         SetupOrderResponse(CreateOrderJson(executedQty, cummulativeQuoteQty, status: "NEW"));
 
         // Act
-        var result = await _sut.PlaceMarketSellAsync(symbol, 1.0);
+        var result = await _sut.PlaceMarketSellAsync(symbol, 1.0m);
 
         // Assert
         result.Should().NotBeNull();
@@ -729,7 +729,7 @@ public class BinanceServiceTests : IDisposable
         SetupOrderResponseWithCapture(CreateOrderJson(1.0, 50_000.0), out var requestSource);
 
         // Act
-        await _sut.PlaceMarketSellAsync(symbol, 1.0);
+        await _sut.PlaceMarketSellAsync(symbol, 1.0m);
 
         // Assert – the order query contains the fresh timestamp
         var request = await requestSource.Task.WaitAsync(TimeSpan.FromSeconds(2));
@@ -754,7 +754,7 @@ public class BinanceServiceTests : IDisposable
         SetupOrderResponseWithCapture(CreateOrderJson(1.0, 50_000.0), out var requestSource);
 
         // Act
-        await _sut.PlaceMarketSellAsync(symbol, 1.0);
+        await _sut.PlaceMarketSellAsync(symbol, 1.0m);
 
         // Assert
         var request = await requestSource.Task.WaitAsync(TimeSpan.FromSeconds(2));

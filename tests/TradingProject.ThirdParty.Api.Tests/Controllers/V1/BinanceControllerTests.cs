@@ -190,7 +190,7 @@ public class BinanceControllerTests
     {
         // Arrange
         var symbol = "BTCUSDT";
-        var quoteOrderQty = 100.0;
+        var quoteOrderQty = 100.0m;
         var cancellationToken = CancellationToken.None;
         var command = new PlaceMarketBuyCommand(symbol, quoteOrderQty);
         var expectedDto = new BinanceOrderResultDto("12345", 0.002, 100.0, 50000.0);
@@ -212,7 +212,7 @@ public class BinanceControllerTests
     {
         // Arrange
         var symbol = "BTCUSDT";
-        var quantity = 0.002;
+        var quantity = 0.002m;
         var cancellationToken = CancellationToken.None;
         var command = new PlaceMarketSellCommand(symbol, quantity);
         var expectedDto = new BinanceOrderResultDto("67890", 0.002, 100.0, 50000.0);
@@ -234,7 +234,7 @@ public class BinanceControllerTests
     {
         // Arrange
         var symbol = "BTCUSDT";
-        var quoteOrderQty = 100.0;
+        var quoteOrderQty = 100.0m;
         var cancellationToken = CancellationToken.None;
         var command = new PlaceMarketBuyCommand(symbol, quoteOrderQty);
         const string errorMessage = "Binance order failed: insufficient balance";
@@ -256,7 +256,7 @@ public class BinanceControllerTests
     {
         // Arrange
         var symbol = "BTCUSDT";
-        var quantity = 0.002;
+        var quantity = 0.002m;
         var cancellationToken = CancellationToken.None;
         var command = new PlaceMarketSellCommand(symbol, quantity);
         const string errorMessage = "Binance order failed: insufficient balance";
