@@ -52,7 +52,11 @@ public class BinanceService : IBinanceService
             url);
 
         var response = await _httpClient.SendAsync(request, cancellationToken);
-        response.EnsureSuccessStatusCode();
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException($"Binance balances failed ({(int)response.StatusCode}): {errorBody}");
+        }
 
         return await JsonSerializer.DeserializeAsync<ListBinanceBalanceDto>(
             await response.Content.ReadAsStreamAsync(cancellationToken), _jsonOptions, cancellationToken);

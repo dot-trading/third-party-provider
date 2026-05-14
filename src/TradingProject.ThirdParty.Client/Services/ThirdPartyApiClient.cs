@@ -210,7 +210,11 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
                 request.Symbol, request.QuoteOrderQty);
 
             var response = await _httpClient.PostAsJsonAsync("api/v1/Binance/order/buy", request, cancellationToken);
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new HttpRequestException($"Binance order failed ({(int)response.StatusCode}): {errorBody}");
+            }
 
             var result = await response.Content
                 .ReadFromJsonAsync<BinanceOrderResultResponse>(JsonOptions, cancellationToken);
@@ -238,7 +242,11 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
                 request.Symbol, request.Quantity);
 
             var response = await _httpClient.PostAsJsonAsync("api/v1/Binance/order/sell", request, cancellationToken);
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+                throw new HttpRequestException($"Binance order failed ({(int)response.StatusCode}): {errorBody}");
+            }
 
             var result = await response.Content
                 .ReadFromJsonAsync<BinanceOrderResultResponse>(JsonOptions, cancellationToken);
