@@ -163,7 +163,7 @@ public class BinanceService : IBinanceService
 
     public async Task<BinanceOrderDto> PlaceMarketBuyAsync(
         string symbol,
-        double quoteOrderQty,
+        decimal quoteOrderQty,
         CancellationToken cancellationToken = default)
     {
         var qty = quoteOrderQty.ToString("F8", System.Globalization.CultureInfo.InvariantCulture);
@@ -187,17 +187,17 @@ public class BinanceService : IBinanceService
         return order;
     }
 
-    public async Task<BinanceOrderDto> PlaceMarketSellAsync(string symbol, double quantity,
+    public async Task<BinanceOrderDto> PlaceMarketSellAsync(string symbol, decimal quantity,
         CancellationToken cancellationToken = default)
     {
         var stepSizeObject = await GetLotStepSizeAsync(symbol, cancellationToken);
 
-        if (stepSizeObject is null || stepSizeObject.StepSizeValue is null or <= 0)
+        if (stepSizeObject is null || !stepSizeObject.StepSizeValue.HasValue || stepSizeObject.StepSizeValue.Value <= 0)
         {
             throw new InvalidOperationException($"Cannot place order: LotStepSize missing or invalid for {symbol}");
         }
 
-        var stepSizeValue = stepSizeObject.StepSizeValue.Value;
+        var stepSizeValue = (decimal)stepSizeObject.StepSizeValue.Value;
 
         // Align quantity to LOT_SIZE step size by truncating down
         var alignedQty = Math.Truncate(quantity / stepSizeValue) * stepSizeValue;
@@ -206,7 +206,7 @@ public class BinanceService : IBinanceService
         if (alignedQty <= 0)
         {
             throw new InvalidOperationException(
-                $"Cannot place order for {symbol}: quantity {quantity} after LOT_SIZE alignment is zero or negative. " +
+                $"Binance order failed (-1013): Cannot place order for {symbol}: quantity {quantity} after LOT_SIZE alignment is zero or negative. " +
                 $"The quantity is below the minimum step size of {stepSizeValue}.");
         }
 
@@ -218,17 +218,17 @@ public class BinanceService : IBinanceService
             var priceDto = await GetCurrentPriceAsync(symbol, cancellationToken);
             if (priceDto?.Price > 0)
             {
-                var orderValue = alignedQty * priceDto.Price;
-                if (orderValue < minNotional.Value)
+                var orderValue = alignedQty * (decimal)priceDto.Price;
+                if (orderValue < (decimal)minNotional.Value)
                 {
                     throw new InvalidOperationException(
-                        $"Cannot place order for {symbol}: order value {orderValue} is below the minimum notional of {minNotional.Value}.");
+                        $"Binance order failed (-1013): Cannot place order for {symbol}: order value {orderValue} is below the minimum notional of {minNotional.Value}.");
                 }
             }
         }
 
         // Calculate decimal places from step size (e.g., stepSize=0.001 → decimals=3)
-        var decimals = Math.Max(0, (int)Math.Round(-Math.Log10(stepSizeValue)));
+        var decimals = Math.Max(0, (int)Math.Round(-Math.Log10((double)stepSizeValue)));
         var qty = alignedQty.ToString($"F{decimals}", System.Globalization.CultureInfo.InvariantCulture);
 
         var timestamp = _timerService.BinanceNowDateTimeOffset();

@@ -4,7 +4,7 @@ using TradingProject.ThirdParty.Application.Common.Models;
 
 namespace TradingProject.ThirdParty.Application.Features.Binance.Commands.PlaceMarketSell;
 
-public record PlaceMarketSellCommand(string Symbol, double Quantity) : IRequest<BinanceOrderResultDto>;
+public record PlaceMarketSellCommand(string Symbol, decimal Quantity) : IRequest<BinanceOrderResultDto>;
 
 public class PlaceMarketSellCommandHandler(IBinanceService binanceService)
     : IRequestHandler<PlaceMarketSellCommand, BinanceOrderResultDto>

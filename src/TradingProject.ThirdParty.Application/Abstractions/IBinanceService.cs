@@ -27,12 +27,12 @@ public interface IBinanceService
     
     Task<BinanceOrderDto> PlaceMarketBuyAsync(
         string symbol,
-        double quoteOrderQty,
+        decimal quoteOrderQty,
         CancellationToken cancellationToken = default);
     
     Task<BinanceOrderDto> PlaceMarketSellAsync(
         string symbol,
-        double quantity,
+        decimal quantity,
         CancellationToken cancellationToken = default);
     
     Task<BinanceFilterDto?> GetMinNotionalAsync(
