@@ -200,6 +200,29 @@ public class ThirdPartyApiClient : IThirdPartyApiClient
     }
 
     /// <inheritdoc />
+    public async Task<List<BinanceTicker24HResponse>> Get24hTickersAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("Fetching bulk 24h tickers from ThirdParty API (V1)");
+
+            var response = await _httpClient.GetAsync("api/v1/Binance/tickers", cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content
+                .ReadFromJsonAsync<List<BinanceTicker24HResponse>>(JsonOptions, cancellationToken);
+
+            _logger.LogDebug("Successfully retrieved {Count} tickers", result?.Count ?? 0);
+            return result ?? [];
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Failed to fetch bulk 24h tickers from ThirdParty API");
+            throw;
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<BinanceOrderResultResponse?> PlaceMarketBuyAsync(PlaceMarketBuyRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);

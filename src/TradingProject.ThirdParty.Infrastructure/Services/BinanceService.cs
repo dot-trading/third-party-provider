@@ -114,6 +114,18 @@ public class BinanceService : IBinanceService
             await response.Content.ReadAsStreamAsync(cancellationToken), _jsonOptions, cancellationToken);
     }
 
+    public async Task<List<BinanceTicker24HDto>> GetTickers24HAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var url = "/api/v3/ticker/24hr";
+
+        var response = await _httpClient.GetAsync(url, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        return await JsonSerializer.DeserializeAsync<List<BinanceTicker24HDto>>(
+            await response.Content.ReadAsStreamAsync(cancellationToken), _jsonOptions, cancellationToken) ?? [];
+    }
+
     public async Task<BinanceOrderDto> PlaceOrderAsync(
         string query,
         CancellationToken cancellationToken = default)

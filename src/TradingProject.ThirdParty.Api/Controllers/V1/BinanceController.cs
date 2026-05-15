@@ -8,6 +8,7 @@ using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetKlines;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetPrice;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetTicker24h;
 using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetMinNotional;
+using TradingProject.ThirdParty.Application.Features.Binance.Queries.GetTickers24h;
 
 namespace TradingProject.ThirdParty.Api.Controllers.V1;
 
@@ -61,6 +62,13 @@ public class BinanceController(IMediator mediator) : ControllerBase
     {
         var result = await mediator.Send(new GetTicker24hQuery(symbol), cancellationToken);
         if (result == null) return NotFound();
+        return Ok(result);
+    }
+
+    [HttpGet("tickers")]
+    public async Task<IActionResult> GetTickers24HAsync(CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new GetTickers24hQuery(), cancellationToken);
         return Ok(result);
     }
 

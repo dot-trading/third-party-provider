@@ -21,6 +21,9 @@ public interface IBinanceService
         string symbol,
         CancellationToken cancellationToken = default);
 
+    Task<List<BinanceTicker24HDto>> GetTickers24HAsync(
+        CancellationToken cancellationToken = default);
+
     Task<BinanceOrderDto> PlaceOrderAsync(
         string query,
         CancellationToken cancellationToken = default);
