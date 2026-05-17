@@ -7,14 +7,15 @@ using TradingProject.ThirdParty.Domain.Models.Market;
 
 namespace TradingProject.ThirdParty.Application.Features.Sentiment.Queries.GetFearAndGreed;
 
-public record GetFearAndGreedQuery : IRequest<FearAndGreedIndex>;
+public record GetFearAndGreedQuery : IRequest<FearAndGreedIndex?>;
 
 public class GetFearAndGreedQueryHandler(
     ISentimentService sentimentService,
     ICacheService cache,
-    ILogger<GetFearAndGreedQueryHandler> logger) : IRequestHandler<GetFearAndGreedQuery, FearAndGreedIndex>
+    JsonSerializerOptions options,
+    ILogger<GetFearAndGreedQueryHandler> logger) : IRequestHandler<GetFearAndGreedQuery, FearAndGreedIndex?>
 {
-    public async Task<FearAndGreedIndex> Handle(GetFearAndGreedQuery request, CancellationToken cancellationToken)
+    public async Task<FearAndGreedIndex?> Handle(GetFearAndGreedQuery request, CancellationToken cancellationToken)
     {
         var key = CacheKeys.Sentiment.FearAndGreedKey;
 
@@ -22,7 +23,7 @@ public class GetFearAndGreedQueryHandler(
         if (cached is not null)
         {
             logger.LogInformation("Returning cached Fear & Greed Index");
-            return JsonSerializer.Deserialize<FearAndGreedIndex>(cached)!;
+            return JsonSerializer.Deserialize<FearAndGreedIndex>(cached, options);
         }
 
         logger.LogInformation("Fetching Fear & Greed Index from service");
